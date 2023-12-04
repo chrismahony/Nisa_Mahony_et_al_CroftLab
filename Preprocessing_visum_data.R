@@ -1,7 +1,3 @@
-#Patritcia can you add the script you ran ofr building the initial visiuim object?
-#Reading in data (DONE), creating seuart objects (DONE), merging data preprocessing (DONE), clustering etc.
-#Thanks!
-
 #Load data####
 
 S1datA <- Load10X_Spatial("./SampleA/outs")
