@@ -1,0 +1,217 @@
+```{r}
+
+amp2_small <- amp2_small %>% NormalizeData() %>% ScaleData() %>% FindVariableFeatures() %>% RunPCA() %>% RunUMAP(dims= 1:30)
+
+
+cols <- ArchR::paletteDiscrete(amp2_small@meta.data[, "cell_type"]);
+
+DimPlot(amp2_small, group.by = "cell_type", cols=cols)
+
+
+```
+
+
+
+
+
+
+```{r}
+amp2_small<-AddModuleScore(amp2_small, features=list(TGFb_vs_NSres_f$...1), name="TGFb_module")
+amp2_small<-AddModuleScore(amp2_small, features=list(IFNg_vs_NSres_f$...1), name="IFNg_module")
+amp2_small<-AddModuleScore(amp2_small, features=list(IL1b_vs_NSres_f$...1), name="IL1b_module")
+amp2_small<-AddModuleScore(amp2_small, features=list(TNFa_vs_NSres_f$...1), name="TNFa_module")
+amp2_small<-AddModuleScore(amp2_small, features=list(IL6_vs_NS$gene), name="IL6_module")
+
+for (i in 1:(length(gene)-1)){
+  amp2_small <- AddModuleScore(amp2_small, features = list(gene[[i]]$features.plot), name=names(gene)[[i]])
+  }
+
+
+markers_fibs <- markers %>% filter(grepl('Fibroblast', cluster))
+to_filter <- unique(markers_fibs$cluster)[c(1,2,3,5,6,9)]
+
+marker_list <- list()
+for (i in 1:length(to_filter)){
+marker_list[[i]] <- markers %>% filter(cluster == to_filter[[i]])
+}
+names(marker_list) <- to_filter
+
+for (i in 1:length(marker_list)){
+  amp2_small <- AddModuleScore(amp2_small, features = list(marker_list[[i]]$gene), name=paste0(names(marker_list)[[i]], "cluster_mod"))
+  }
+
+amp2_small <- AddModuleScore(amp2_small, features = All.markers_fig3_notch %>% filter(cluster== "FLS_HUVEC") %>% head(40) %>% rownames() %>% list(), name="notch_module_new")
+
+amp2_small <- AddModuleScore(amp2_small, features = all_markers_medfibros %>% filter(cluster== "SPARC+COL3A1+ C4") %>% head(40) %>% rownames() %>% list(), name="endo_interacting_new")
+
+amp2_small <- AddModuleScore(amp2_small, features = all_markers_medfibros %>% filter(cluster== "CXCL10+CCL19+ C11") %>% head(40) %>% rownames() %>% list(), name="Tcell_interacting_new")
+
+
+
+
+
+
+cytokines <- dir("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/", pattern = "NS_new2.csv")
+
+cytokines_list <- list()
+for (i in 1:length(cytokines[c(3,6,7,8,9)])){
+  cytokines_list[[i]] <- read_csv(paste0("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/", cytokines[c(3,6,7,8,9)][[i]]))
+}
+names(cytokines_list) <- cytokines[c(3,6,7,8,9)]
+
+for (i in 1:length(names(cytokines_list))){
+  amp2_small<-AddModuleScore(amp2_small, features=list(cytokines_list[[i]]$gene), name=names(cytokines_list)[[i]])
+}
+
+
+
+
+Idents(amp2_small) <- 'cluster_name'
+levels(amp2_small)[grep("F-", levels(amp2_small))]
+DotPlot(amp2_small, features= c("endo_interacting_new1", "Tcell_interacting_new1", "notch_module_new1"),idents=levels(amp2_small)[grep("F-", levels(amp2_small))])+RotatedAxis()
+
+DotPlot(amp2_small, features= c("IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1"),idents=c(levels(amp2_small)[grep("F-", levels(amp2_small))], "M-u1: SERPINF1+ sublining"))+RotatedAxis()
+
+DotPlot(amp2_small, features= c("TGFb_module1"),idents=levels(amp2_small)[grep("F-", levels(amp2_small))])+RotatedAxis()
+
+dotplot<-DotPlot(amp2_small, features= c("Fibroblast.COMP..Fibroblast.Niche1", "Fibroblast.Lining.Layer.Cells1" ,    "Fibroblast.APOD..GAS5..FABP4.1" ,   
+"Fibroblast.Vascular.Niche1"  ,       "Fibroblast.B.Cell.Rich.Niche1"   ,   "Fibroblast.T.Cell.Rich.Niche1","TGFb_vs_NS_new2.csv1",  "endo_interacting_new1","Tcell_interacting_new1" ),idents=levels(amp2_small)[grep("F-", levels(amp2_small))])+RotatedAxis()
+
+
+
+dotplot<-DotPlot(amp2_small, features= c("Fibroblast.COMP..Fibroblast.Niche1", "TGFb_vs_NS_new2.csv1",  "notch_module_new1","Tcell_interacting_new1", "Fibroblast.COMP..Fibroblast.Nichecluster_mod1"),idents=levels(amp2_small)[grep("F-", levels(amp2_small))])+RotatedAxis()
+
+dotplot<-DotPlot(amp2_small, features= c("IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1"),idents=levels(amp2_small)[grep("F-", levels(amp2_small))])+RotatedAxis()
+
+DefaultAssay(amp2_small) <- 'RNA'
+
+dotplot<-DotPlot(amp2_small, features= c("endo_interacting_new1", "Tcell_interacting_new1","Fibroblast.COMP..Fibroblast.Niche1", "Fibroblast.T.Cell.Rich.Niche1", "COL6A1", "CCL19", "COL1A1" ),idents=levels(amp2_small)[grep("F-", levels(amp2_small))])+RotatedAxis()
+
+
+
+
+
+idents_new <- c(levels(amp2_small)[grep("F-", levels(amp2_small))], "M-u1: SERPINF1+ sublining")
+
+idents_new <- c(levels(amp2_small)[grep("F-", levels(amp2_small))])
+
+
+to_plot <- c("Fibroblast.COMP..Fibroblast.Niche1", "Fibroblast.T.Cell.Rich.Niche1","Fibroblast.B.Cell.Rich.Niche1", "Fibroblast.Lining.Layer.Cells1", "Fibroblast.Vascular.Niche1", "Fibroblast.APOD..GAS5..FABP4.1", "endo_interacting_new1", "Tcell_interacting_new1")
+
+to_plot <- c("Fibroblast.COMP..Fibroblast.Niche1", "Fibroblast.T.Cell.Rich.Niche1", "Fibroblast.Lining.Layer.Cells1", "Fibroblast.Vascular.Niche1", "Fibroblast.APOD..GAS5..FABP4.1")
+
+to_plot <- c("IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1", "TGFBR1","TGFBR2", "TGFBR3")
+
+to_plot <- c("IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1")
+
+to_plot <- c("endo_interacting_new1", "Tcell_interacting_new1")
+
+dotplot<-DotPlot(amp2_small, features= to_plot,idents=idents_new)+RotatedAxis()
+
+
+colgene <- rownames(amp2_small)[grep("COL", rownames(amp2_small))]
+
+
+
+dotplot<-DotPlot(amp2_small, features= colgene[-c(4,5,6,8,9,15,20, 22, 23, 33,34,38,44,45,46,60,61,63,64,58,53,54, 56, 59, 50)],idents=levels(amp2_small)[grep("F-", levels(amp2_small))])+RotatedAxis()
+
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, border=T, row_names_gp = gpar(fontsize = 10), column_names_gp = gpar(fontsize = 10),column_names_rot = 45)
+
+pheatmap(dotplot)
+
+```
+```{r}
+
+
+Idents(amp2_small) <- 'cluster_name'https://portal.bear.bham.ac.uk/rnode/bear-pg0202u27b.bear.cluster/36458/graphics/plot_zoom_png?width=638&height=433
+
+rownames(amp2_small)
+
+rownames(amp2_small)[grep("TGF", rownames(amp2_small))]
+
+FeaturePlot(amp2_small, features = "COL1A1")
+
+dotplot<-DotPlot(amp2_small, features= c("TGFBR1", "TGFBR2", "TGFBR3", "TGFb_vs_NS_new2.csv1"),idents=levels(amp2_small)[grep("F-", levels(amp2_small))])+RotatedAxis()
+
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, border = T)
+
+
+
+dotplot<-DotPlot(amp2_small, features= c("TGFB1", "TGFB2", "TGFB3"),idents=levels(amp2_small)[grep("M-", levels(amp2_small))])+RotatedAxis()
+
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, border=T)
+
+
+
+```
+```{r}
+dotplot<-DotPlot(amp2_small, features= c("TGFB1", "TGFB2", "TGFB3"),idents=levels(amp2_small)[grep("E-", levels(amp2_small))])+RotatedAxis()
+
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, border=T)
+
+
+```
