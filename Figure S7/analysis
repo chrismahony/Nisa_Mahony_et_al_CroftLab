@@ -1,0 +1,497 @@
+
+
+```{r}
+library(Signac)
+library(Seurat)
+library(GenomicRanges)
+library(future)
+library(EnsDb.Mmusculus.v79)
+#library(EnsDb.Mmusculus.v75)
+library(BSgenome.Mmusculus.UCSC.mm10)
+library(ggplot2)
+library(cowplot)
+library(patchwork) #latest version is required!
+library(TFBSTools)
+library(JASPAR2020)
+library(gsfisher)
+library(EnhancedVolcano)
+#library(monocle)
+setwd("/rds/projects/c/croftap-stia-atac/CM_multiome/STIA_andATAC/")
+options(bitmapType='cairo')
+library(CellChat)
+#load()
+```
+
+```{r}
+
+Idents(merging_VA_grant)<-'named_clusters'
+DimPlot(merging_VA_grant)
+
+
+merging_VA_grant<-AddModuleScore(merging_VA_grant, features = list(rownames(TGFb_vs_NSres_f)), name="TGFb_module")
+merging_VA_grant<-AddModuleScore(merging_VA_grant, features = list(All_markers_fig3_notch_HUVEC$gene), name="EC_module")
+merging_VA_grant<-AddModuleScore(merging_VA_grant, features = list(myFirbo_genes_hg), name="myoFibro")
+merging_VA_grant<-AddModuleScore(merging_VA_grant, features = list(head(flsTop40_0_125_human$gene, 40)), name="DKK3_module")
+
+DotPlot(merging_VA_grant, features = c("DKK3_module1", "myoFibro1", "TGFb_module1", "EC_module1"))+ scale_size(range = c(2, 8))+RotatedAxis()
+
+SpatialDimPlot(merging_VA_grant, "named_clusters", images = "slice1.17")
+SpatialFeaturePlot(merging_VA_grant,features = c("TGFb_module1", "EC_module1"), images = "slice1.17")
+
+
+SpatialDimPlot(merging_VA_grant, "named_clusters", images = "slice1.13")
+SpatialFeaturePlot(merging_VA_grant, features = c("TGFb_module1", "EC_module1"), images = "slice1.13")
+
+```
+
+
+
+
+
+
+
+
+```{r}
+myFirbo_genes_mm<-c("Aspn", "Bgn", "Mfap2", "Sparc", "Loxl2", "Efemp2", "Thbs4", "Mfap4", "Lox", "Lum", "Hspg2", "Crtap", "Fbln2", "Fbn2", "Ptn", "Thbs2", "Postn", "Fmod", "Pxdn", "Tnc", "Cthrc1", "Tagln", "Acta2", "Lrrc15", "Thy1", "Dkk3", "Angptl2", "Col12a1", "Col7a1", "Col1a1", "Col1a2", "Col3a1", "Col5a1", "Col6a1")
+
+myFirbo_genes_hg<-toupper(myFirbo_genes_mm)
+
+dkkmodule_genes<-head(flsTop40_0_125$gene, 40)
+
+myFirbo_genes_mm[myFirbo_genes_mm %in% dkkmodule_genes]
+
+dkkmodule_genes[dkkmodule_genes %in% myFirbo_genes_mm]
+
+```
+
+
+
+```{r}
+DimPlot(amp, group.by = "type_cm")
+FeaturePlot(amp_fibrosonly, features = c("CD34", "DKK3", "HLA-DRA", "CD55"))
+DimPlot(amp_fibrosonly, group.by = "RNA_snn_res.0.3")
+
+```
+```{r}
+Idents(amp_fibrosonly)<-"RNA_snn_res.0.3"
+amp_fibros_markers<-FindAllMarkers(amp_fibrosonly, only.pos = T)
+
+flsTop40_0_125_human<-flsTop40_0_125
+flsTop40_0_125_human$gene<-toupper(flsTop40_0_125_human$gene)
+
+amp_fibrosonly<-AddModuleScore(amp_fibrosonly, features = list(myFirbo_genes_hg), name="myoFibro")
+
+amp_fibrosonly<-AddModuleScore(amp_fibrosonly, features = list(head(flsTop40_0_125_human$gene, 40)), name="DKK3_module")
+
+amp_fibrosonly<-AddModuleScore(amp_fibrosonly, features = list(rownames(TGFb_vs_NSres_f)), name="TGFb_module")
+
+All_markers_fig3_notch_HUVEC <- read_csv("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/zone_annotation/EC_Tcellsmarkers/All_markers_fig3_notch_HUVEC.csv")
+All_markers_fig3_notch_HUVEC_ECgenes<-All_markers_fig3_notch_HUVEC[All_markers_fig3_notch_HUVEC$cluster == "FLS_HUVEC",]
+All_markers_fig3_notch_HUVEC<-All_markers_fig3_notch_HUVEC[All_markers_fig3_notch_HUVEC$p_val_adj < 0.05,]
+
+
+amp_fibrosonly<-AddModuleScore(amp_fibrosonly, features = list(All_markers_fig3_notch_HUVEC$gene), name="EC_module")
+
+
+DotPlot(amp_fibrosonly, features = c("CD34", "DKK3", "CD55", "HLA-DRA", "DKK3_module1", "myoFibro1", "TGFb_module1", "EC_module1"))+ scale_size(range = c(2, 8))+RotatedAxis()
+
+```
+```{r}
+Idents(amp_fibrosonly)<-'cluster_disease'
+table(amp_fibrosonly$cluster_disease)
+DotPlot(amp_fibrosonly, features = c("CD34", "DKK3", "CD55", "HLA-DRA", "DKK3_module1", "myoFibro1", "TGFb_module1"), idents = c("2_OA", "2_RA"))+ scale_size(range = c(2, 8))+RotatedAxis()
+
+```
+
+
+
+
+
+```{r}
+
+Human_PS_Fibro<-AddModuleScore(Human_PS_Fibro, features = list(head(flsTop40_0_125_human$gene, 40)), name="DKK3_module")
+
+Human_PS_Fibro<-AddModuleScore(Human_PS_Fibro, features = list(myFirbo_genes_hg), name="myoFibro")
+
+markers_fibs_COMP <- markers_fibs %>% filter(cluster=="Fibroblast COMP+ Fibroblast Niche")
+Human_PS_Fibro<-AddModuleScore(Human_PS_Fibro, features = list(markers_fibs_COMP$gene), name="Fibrotic_sig")
+
+
+Human_PS_Fibro<-AddModuleScore(Human_PS_Fibro, features = list(markers_fibs_COMP$gene), name="Fibrotic_sig")
+
+
+DimPlot(Human_PS_Fibro, group.by = "ClustName")
+
+DotPlot(Human_PS_Fibro, features = c("NPNT", "PI16", "CCL19", "COL3A1","ADEMDEC1", "LRRC15",  "Fibrotic_sig1" ))+ scale_size(range = c(2, 8))+RotatedAxis()
+
+
+DotPlot(Human_PS_Fibro, features = c("NPNT", "PI16", "CCL19", "COL3A1","ADEMDEC1", "LRRC15",  "DKK3_module1", "DKK3", "myoFibro1"))+ scale_size(range = c(2, 8))+RotatedAxis()
+
+Human_PS_Fibro<-AddModuleScore(Human_PS_Fibro, features = list(rownames(TGFb_vs_NSres_f)), name="TGFb_module")
+
+Human_PS_Fibro<-AddModuleScore(Human_PS_Fibro, features = list(All_markers_fig3_notch_HUVEC$gene), name="EC_module")
+
+
+DotPlot(Human_PS_Fibro, features = c("NPNT", "PI16", "CCL19", "COL3A1","ADEMDEC1", "LRRC15",  "DKK3_module1", "myoFibro1", "TGFb_module1", "EC_module1"))+ scale_size(range = c(2, 8))+RotatedAxis()
+
+DotPlot(Human_PS_Fibro, features = c("NPNT", "PI16", "CCL19", "COL3A1","ADEMDEC1", "LRRC15",  "DKK3_module1", "myoFibro1", "TGFb_module1", "Fibrotic_sig1"))+ scale_size(range = c(2, 8))+RotatedAxis()
+
+```
+```{r}
+DimPlot(mouse_merged)
+```
+```{r}
+mouse_merged<-AddModuleScore(mouse_merged, features = list(head(flsTop40_0_125$gene, 40)), name="DKK3_module")
+
+mouse_merged<-AddModuleScore(mouse_merged, features = list(myFirbo_genes_mm), name="myoFibro")
+
+
+DotPlot(mouse_merged, features = c("Adamdec1", "Cxcl5", "Lrrc15", "Bmp4", "Hhip", "Npnt", "Fbln1", "Pi16", "Coch", "Col15a1", "Comp", "Cxcl12", "Ccl9", "DKK3_module1", "Dkk3", "myoFibro1"))+ scale_size(range = c(2, 8))+RotatedAxis()
+
+All_markers_fig3_notch_HUVEC_mm<-All_markers_fig3_notch_HUVEC
+All_markers_fig3_notch_HUVEC_mm<-gsub("(?<=\\b)([a-z])", "\\U\\1", tolower(All_markers_fig3_notch_HUVEC_mm$gene), perl=TRUE)
+
+mouse_merged<-AddModuleScore(mouse_merged, features = list(All_markers_fig3_notch_HUVEC_mm), name="EC_module")
+
+
+TGFb_vs_NSres_f_mm<-TGFb_vs_NSres_f
+TGFb_vs_NSres_f_mm<-gsub("(?<=\\b)([a-z])", "\\U\\1", tolower(rownames(TGFb_vs_NSres_f_mm)), perl=TRUE)
+
+mouse_merged<-AddModuleScore(mouse_merged, features = list(TGFb_vs_NSres_f_mm), name="TGFb_module")
+
+DotPlot(mouse_merged, features = c("Adamdec1", "Cxcl5", "Lrrc15", "Bmp4", "Hhip", "Npnt", "Fbln1", "Pi16", "Coch", "Col15a1", "Comp", "Cxcl12", "Ccl9", "DKK3_module1", "myoFibro1", "TGFb_module1", "EC_module1"))+ scale_size(range = c(2, 8))+RotatedAxis()
+```
+```{r}
+
+DimPlot(med_fibros, group.by = "Tissue")
+
+```
+```{r}
+med_fibros<-AddModuleScore(med_fibros, features = list(head(flsTop40_0_125_human$gene, 40)), name="DKK3_module")
+med_fibros<-AddModuleScore(med_fibros, features = list(myFirbo_genes_hg), name="myoFibro")
+
+med_fibros<-AddModuleScore(med_fibros, features = list(rownames(TGFb_vs_NSres_f)), name="TGFb_module")
+
+med_fibros<-AddModuleScore(med_fibros, features = list(All_markers_fig3_notch_HUVEC$gene), name="EC_module")
+
+med_fibros<-AddModuleScore(med_fibros, features = list(markers_fibs_COMP$gene), name="Fibrotic_sig")
+med_fibros<-AddModuleScore(med_fibros, features = list(markers_fibs_COMP$gene), name=c("Fibrotic_sig")
+
+
+
+Idents(med_fibros)<-'Cluster_name'
+DotPlot(med_fibros, features = c("MYH11", "PTGS2", "CXCL10", "CD34","SPARC", "FBLN1",  "DKK3_module1", "myoFibro1", "TGFb_module1", "EC_module1"))+ scale_size(range = c(2, 8))+RotatedAxis()
+
+
+Idents(med_fibros)<-'Cluster_name'
+DotPlot(med_fibros, features = c("MYH11", "PTGS2", "CXCL10", "CD34","SPARC", "FBLN1",  "DKK3_module1", "myoFibro1", "TGFb_module1", "EC_module1"))+ scale_size(range = c(2, 8))+RotatedAxis()
+
+```
+```{r}
+Idents(med_fibros)<-"Cluster_name"
+med_fibros$Cluster_name_tissue <- paste(Idents(med_fibros), med_fibros$Tissue, sep = "_")
+Idents(med_fibros)<-"Cluster_name_tissue"
+
+Dotplot_heatmap<-DotPlot(med_fibros, features = "DKK3")
+Dotplot_heatmap_data <- Dotplot_heatmap[["data"]]
+
+
+Dotplot_heatmap_data<-cSplit(Dotplot_heatmap_data, 'id', sep="_", type.convert=FALSE)
+Dotplot_heatmap_data <- subset(Dotplot_heatmap_data, select = -c (avg.exp, pct.exp)) 
+
+Dotplot_heatmap_data_Salv = subset(Dotplot_heatmap_data, id_2 == "SalivaryGland")
+Dotplot_heatmap_data_Salv<-Dotplot_heatmap_data_Salv[order(Dotplot_heatmap_data_Salv$id_1), ]
+Dotplot_heatmap_data_Salv <- Dotplot_heatmap_data_Salv %>% remove_rownames %>% column_to_rownames(var="id_1")
+Dotplot_heatmap_data_Salv = subset(Dotplot_heatmap_data_Salv, select = -c(1,3) )
+names(Dotplot_heatmap_data_Salv)[names(Dotplot_heatmap_data_Salv) == 'avg.exp.scaled'] <- 'SalivaryGland'
+
+Dotplot_heatmap_data_Gut = subset(Dotplot_heatmap_data, id_2 == "Gut")
+Dotplot_heatmap_data_Gut<-Dotplot_heatmap_data_Gut[order(Dotplot_heatmap_data_Gut$id_1), ]
+Dotplot_heatmap_data_Gut <- Dotplot_heatmap_data_Gut %>% remove_rownames %>% column_to_rownames(var="id_1")
+Dotplot_heatmap_data_Gut = subset(Dotplot_heatmap_data_Gut, select = -c(1,3) )
+names(Dotplot_heatmap_data_Gut)[names(Dotplot_heatmap_data_Gut) == 'avg.exp.scaled'] <- 'Gut'
+
+Dotplot_heatmap_data_Lung = subset(Dotplot_heatmap_data, id_2 == "Lung")
+Dotplot_heatmap_data_Lung<-Dotplot_heatmap_data_Lung[order(Dotplot_heatmap_data_Lung$id_1), ]
+Dotplot_heatmap_data_Lung <- Dotplot_heatmap_data_Lung %>% remove_rownames %>% column_to_rownames(var="id_1")
+Dotplot_heatmap_data_Lung = subset(Dotplot_heatmap_data_Lung, select = -c(1,3) )
+names(Dotplot_heatmap_data_Lung)[names(Dotplot_heatmap_data_Lung) == 'avg.exp.scaled'] <- 'Lung'
+
+
+Dotplot_heatmap_data_Synovium = subset(Dotplot_heatmap_data, id_2 == "Synovium")
+Dotplot_heatmap_data_Synovium<-Dotplot_heatmap_data_Synovium[order(Dotplot_heatmap_data_Synovium$id_1), ]
+Dotplot_heatmap_data_Synovium <- Dotplot_heatmap_data_Synovium %>% remove_rownames %>% column_to_rownames(var="id_1")
+Dotplot_heatmap_data_Synovium = subset(Dotplot_heatmap_data_Synovium, select = -c(1,3) )
+names(Dotplot_heatmap_data_Synovium)[names(Dotplot_heatmap_data_Synovium) == 'avg.exp.scaled'] <- 'Synovium'
+
+Dotplot_heatmap_data_Salv$Gut<-Dotplot_heatmap_data_Gut$Gut
+Dotplot_heatmap_data_Salv$Lung<-Dotplot_heatmap_data_Lung$Lung
+Dotplot_heatmap_data_Salv$Synovium<-Dotplot_heatmap_data_Synovium$Synovium
+
+Dotplot_heatmap_data_Salv<-as.matrix(Dotplot_heatmap_data_Salv)
+
+library(ComplexHeatmap)
+Heatmap(Dotplot_heatmap_data_Salv)
+
+```
+
+
+```{r}
+Idents(med_fibros)<-"Cluster_name"
+med_fibros$Cluster_name_tissue <- paste(Idents(med_fibros), med_fibros$Tissue, sep = "_")
+Idents(med_fibros)<-"Cluster_name_tissue"
+
+Dotplot_heatmap<-DotPlot(med_fibros, features = "Fibrotic_sig1")
+Dotplot_heatmap_data <- Dotplot_heatmap[["data"]]
+
+
+Dotplot_heatmap_data<-cSplit(Dotplot_heatmap_data, 'id', sep="_", type.convert=FALSE)
+Dotplot_heatmap_data <- subset(Dotplot_heatmap_data, select = -c (avg.exp, pct.exp)) 
+
+Dotplot_heatmap_data_Salv = subset(Dotplot_heatmap_data, id_2 == "SalivaryGland")
+Dotplot_heatmap_data_Salv<-Dotplot_heatmap_data_Salv[order(Dotplot_heatmap_data_Salv$id_1), ]
+Dotplot_heatmap_data_Salv <- Dotplot_heatmap_data_Salv %>% remove_rownames %>% column_to_rownames(var="id_1")
+Dotplot_heatmap_data_Salv = subset(Dotplot_heatmap_data_Salv, select = -c(1,3) )
+names(Dotplot_heatmap_data_Salv)[names(Dotplot_heatmap_data_Salv) == 'avg.exp.scaled'] <- 'SalivaryGland'
+
+Dotplot_heatmap_data_Gut = subset(Dotplot_heatmap_data, id_2 == "Gut")
+Dotplot_heatmap_data_Gut<-Dotplot_heatmap_data_Gut[order(Dotplot_heatmap_data_Gut$id_1), ]
+Dotplot_heatmap_data_Gut <- Dotplot_heatmap_data_Gut %>% remove_rownames %>% column_to_rownames(var="id_1")
+Dotplot_heatmap_data_Gut = subset(Dotplot_heatmap_data_Gut, select = -c(1,3) )
+names(Dotplot_heatmap_data_Gut)[names(Dotplot_heatmap_data_Gut) == 'avg.exp.scaled'] <- 'Gut'
+
+Dotplot_heatmap_data_Lung = subset(Dotplot_heatmap_data, id_2 == "Lung")
+Dotplot_heatmap_data_Lung<-Dotplot_heatmap_data_Lung[order(Dotplot_heatmap_data_Lung$id_1), ]
+Dotplot_heatmap_data_Lung <- Dotplot_heatmap_data_Lung %>% remove_rownames %>% column_to_rownames(var="id_1")
+Dotplot_heatmap_data_Lung = subset(Dotplot_heatmap_data_Lung, select = -c(1,3) )
+names(Dotplot_heatmap_data_Lung)[names(Dotplot_heatmap_data_Lung) == 'avg.exp.scaled'] <- 'Lung'
+
+
+Dotplot_heatmap_data_Synovium = subset(Dotplot_heatmap_data, id_2 == "Synovium")
+Dotplot_heatmap_data_Synovium<-Dotplot_heatmap_data_Synovium[order(Dotplot_heatmap_data_Synovium$id_1), ]
+Dotplot_heatmap_data_Synovium <- Dotplot_heatmap_data_Synovium %>% remove_rownames %>% column_to_rownames(var="id_1")
+Dotplot_heatmap_data_Synovium = subset(Dotplot_heatmap_data_Synovium, select = -c(1,3) )
+names(Dotplot_heatmap_data_Synovium)[names(Dotplot_heatmap_data_Synovium) == 'avg.exp.scaled'] <- 'Synovium'
+
+Dotplot_heatmap_data_Salv$Gut<-Dotplot_heatmap_data_Gut$Gut
+Dotplot_heatmap_data_Salv$Lung<-Dotplot_heatmap_data_Lung$Lung
+Dotplot_heatmap_data_Salv$Synovium<-Dotplot_heatmap_data_Synovium$Synovium
+
+Dotplot_heatmap_data_Salv<-as.matrix(Dotplot_heatmap_data_Salv)
+
+library(ComplexHeatmap)
+Heatmap(Dotplot_heatmap_data_Salv, border=T)
+```
+
+
+
+
+```{r}
+C4_only <- med_fibros[,grepl("C4", med_fibros$Cluster_name, ignore.case=TRUE)]
+C4_only <- FindVariableFeatures(object = C4_only, selection.method = "vst", nfeatures = 2000, verbose=F)
+C4_only_genes <- rownames(C4_only)
+C4_only <- ScaleData(C4_only, features = C4_only_genes)
+C4_only <- RunPCA(C4_only)
+
+Idents(C4_only)<-'tissue'
+Dotplot<-DotPlot(C4_only, features = 'DKK3_module1')
+data<-Dotplot$data
+
+data_new<-data %>% select(-c(avg.exp, pct.exp)) %>%pivot_wider(names_from=id, values_from=avg.exp.scaled) %>% as.data.frame()
+
+data_new<-as.matrix(data_new)
+
+```
+
+
+
+```{r}
+med_fibros$sample_tissue_cluster<-paste(med_fibros$SampleID, med_fibros$Tissue, med_fibros$Cluster_name, sep=".")
+
+
+med_fibros$sample_tissue<-paste(med_fibros$SampleID, med_fibros$Tissue, sep=".")
+
+paste(med_fibros$InflamScore, med_fibros$LibraryID, sep="_") %>% table()
+
+#extract avg. scaled expression for your gene in each cluster and sample
+Idents(med_fibros)<-"sample_tissue"
+dotplot<-DotPlot(med_fibros, features = "Fibrotic_sig1")
+dotplot_data<-dotplot[["data"]]
+dotplot_data <- subset(dotplot_data, select = c(avg.exp.scaled, id))
+names(dotplot_data)[names(dotplot_data)=="avg.exp.scaled"] <- "Fibrotic_sig1"
+
+
+dotplot_data <- dotplot_data %>% cSplit(splitCols = "id", sep=".")
+
+inflam_df <- paste(med_fibros$SampleID, med_fibros$InflamScore, sep=".") %>% unique() %>% as.data.frame() %>% cSplit(splitCols = ".", sep=".")
+
+colnames(inflam_df) <- c("id_1", "inflam", "extra")
+
+inflam_df <- inflam_df %>% replace(is.na(.), 0)
+
+inflam_df$inflam <- paste(inflam_df$inflam, inflam_df$extra, sep=".")
+inflam_df$inflam <- as.double(inflam_df$inflam)
+
+final_df <- dotplot_data %>% 
+  left_join(inflam_df, by="id_1")
+
+
+#plot
+#dotplot_data_synovium <- dotplot_data[dotplot_data$condition_2 == "Synovium",]
+ggplot(final_df, aes(x = Fibrotic_sig1, y = inflam)) +
+    geom_point(aes(color = factor(id_2))) +
+    stat_smooth(method = "lm",
+        col = "black",
+        se = FALSE,
+        size = 0.5)+theme_ArchR()+ theme (legend.position = "none") +
+        facet_wrap(~id_2)
+
+
+#ml = lm(Runx1~InflamScore, data = dotplot_data)
+#summary(ml)$r.squared
+
+library(ggpubr)
+ggscatter(final_df, x = "Fibrotic_sig1", y = "inflam",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+   )+ stat_cor(method = "pearson", label.x = -1, label.y = 1.2)+
+        facet_wrap(~id_2)
+
+```
+
+
+
+
+```{r}
+DimPlot(fibros_breastcancer_GSE176078)+ labs(title ="breastcancer_GSE176078")
+```
+```{r}
+
+fibros_breastcancer_GSE176078<-AddModuleScore(fibros_breastcancer_GSE176078, features = list(head(flsTop40_0_125_human$gene, 40)), name="DKK3_module")
+
+fibros_breastcancer_GSE176078<-AddModuleScore(fibros_breastcancer_GSE176078, features = list(myFirbo_genes_hg), name="myoFibro")
+
+fibros_breastcancer_GSE176078<-AddModuleScore(fibros_breastcancer_GSE176078, features = list(rownames(TGFb_vs_NSres_f)), name="TGFb_module")
+
+fibros_breastcancer_GSE176078<-AddModuleScore(fibros_breastcancer_GSE176078, features = list(markers_fibs_COMP$gene), name="Fibrotic_sig")
+
+
+
+DotPlot(fibros_breastcancer_GSE176078, features=c("myoFibro1", "DKK3_module1", "TGFb_module1", "INHBA", "TPM1",  "ACTA2", "LRRC15", "CTHRC1", "TAGLN", "CLEC3B", "C7", "C3", "IL33", "CXCL2"))+RotatedAxis()+ scale_size(range = c(2, 8))+coord_flip()
+
+
+DotPlot(fibros_breastcancer_GSE176078, features=c("Fibrotic_sig1"))+RotatedAxis()+ scale_size(range = c(2, 8))+coord_flip()
+
+
+```
+
+
+
+```{r}
+
+fibros_breastcancer_GSE176078<-AddModuleScore(fibros_breastcancer_GSE176078, features = list(head(flsTop40_0_125_human$gene, 40)), name="DKK3_module")
+
+
+
+DotPlot(fibros_breastcancer_GSE176078, features=c("DKK3_module1", "DKK3", "INHBA", "TPM1",  "ACTA2", "LRRC15", "CTHRC1", "TAGLN", "CLEC3B", "C7", "C3", "IL33", "CXCL2"))+RotatedAxis()+ scale_size(range = c(2, 8))+coord_flip()
+
+DotPlot(fibros_breastcancer_GSE176078, features=c("DKK3_module1", "INHBA", "TPM1",  "ACTA2", "LRRC15", "CTHRC1", "TAGLN", "CLEC3B", "C7", "C3", "IL33", "CXCL2"))+RotatedAxis()+ scale_size(range = c(2, 8))+coord_flip()
+
+```
+
+```{r}
+DimPlot(fibros_pul_fibrosus_GSE135893)+ labs(title ="pul_fibrosus_GSE135893")
+
+fibros_pul_fibrosus_GSE135893<-AddModuleScore(fibros_pul_fibrosus_GSE135893, features = list(head(flsTop40_0_125_human$gene, 40)), name="DKK3_module")
+
+fibros_pul_fibrosus_GSE135893<-AddModuleScore(fibros_pul_fibrosus_GSE135893, features = list(myFirbo_genes_hg), name="myoFibro")
+
+fibros_pul_fibrosus_GSE135893<-AddModuleScore(fibros_pul_fibrosus_GSE135893, features = list(rownames(TGFb_vs_NSres_f)), name="TGFb_module")
+
+
+fibros_pul_fibrosus_GSE135893<-AddModuleScore(fibros_pul_fibrosus_GSE135893, features = list(markers_fibs_COMP$gene), name="Fibrotic_sig")
+
+
+DotPlot(fibros_pul_fibrosus_GSE135893, features=c("myoFibro1", "DKK3_module1", "TGFb_module1", "INHBA", "TPM1",  "ACTA2", "LRRC15", "CTHRC1", "TAGLN", "CLEC3B", "C7", "C3", "IL33", "CXCL2"))+RotatedAxis()+ scale_size(range = c(2, 8))+coord_flip()#
+
+
+DotPlot(fibros_pul_fibrosus_GSE135893, features=c("Fibrotic_sig1"))+RotatedAxis()+ scale_size(range = c(2, 8))+coord_flip()
+
+```
+
+```{r}
+DimPlot(fibros_UC_GES172261)+ labs(title ="fibros_UC_GES172261")
+
+fibros_UC_GES172261<-AddModuleScore(fibros_UC_GES172261, features = list(head(flsTop40_0_125$gene, 40)), name="DKK3_module")
+
+fibros_UC_GES172261<-AddModuleScore(fibros_UC_GES172261, features = list(myFirbo_genes_mm), name="myoFibro")
+
+
+fibros_UC_GES172261<-AddModuleScore(fibros_UC_GES172261, features = list(TGFb_vs_NSres_f_mm), name="TGFb_module")
+
+
+fibros_pul_fibrosus_GSE135893<-AddModuleScore(fibros_pul_fibrosus_GSE135893, features = list(markers_fibs_COMP$gene), name="Fibrotic_sig")
+
+
+DotPlot(fibros_UC_GES172261, features=c("myoFibro1", "DKK3_module1", "TGFb_module1", "Inhba", "Tpm1",  "Acta2", "Lrrc15", "Cthrc1", "Tagln", "Clec3b", "C7", "C3", "Il33", "Cxcl2"))+RotatedAxis()+ scale_size(range = c(2, 8))+coord_flip()
+```
+
+```{r}
+
+DotPlot(amp, features=c("DKK3", "CD34"))
+
+
+
+markers_human_PS<-FindAllMarkers(Human_PS_Fibro, only.pos = T)
+
+markers_human_PS_LRRC15<-markers_human_PS[markers_human_PS$cluster=="LRRC15",]
+markers_human_PS_ADEMDEC1<-markers_human_PS[markers_human_PS$cluster=="ADAMDEC1",]
+markers_human_PS_CCL19<-markers_human_PS[markers_human_PS$cluster=="CCL19",]
+markers_human_PS_NPNT<-markers_human_PS[markers_human_PS$cluster=="NPNT",]
+markers_human_PS_PI16<-markers_human_PS[markers_human_PS$cluster=="PI16",]
+
+mariola_FLS <-AddModuleScore(mariola_FLS , features = list(head(markers_human_PS_LRRC15$gene,40)), name="LRRC15_mod")
+mariola_FLS <-AddModuleScore(mariola_FLS , features = list(head(markers_human_PS_ADEMDEC1$gene,40)), name="ADEMDEC1_mod")
+mariola_FLS <-AddModuleScore(mariola_FLS , features = list(head(markers_human_PS_CCL19$gene,40)), name="CCL19_mod")
+mariola_FLS <-AddModuleScore(mariola_FLS , features = list(head(markers_human_PS_NPNT$gene,40)), name="NPNT_mod")
+mariola_FLS <-AddModuleScore(mariola_FLS , features = list(head(markers_human_PS_PI16$gene,40)), name="PI16_mod")
+
+Idents(mariola_FLS)<-'group'
+DotPlot(mariola_FLS, features = c("LRRC15_mod1", "ADEMDEC1_mod1", "CCL19_mod1","NPNT_mod1", "PI16_mod1", "DKK3"))+RotatedAxis()
+
+
+amp_fibros_markers_0<-amp_fibros_markers[amp_fibros_markers$cluster=="0",]
+amp_fibros_markers_1<-amp_fibros_markers[amp_fibros_markers$cluster=="1",]
+amp_fibrosonly_2<-amp_fibros_markers[amp_fibros_markers$cluster=="2",]
+amp_fibrosonly_3<-amp_fibros_markers[amp_fibros_markers$cluster=="3",]
+
+mariola_FLS <-AddModuleScore(mariola_FLS , features = list(head(amp_fibros_markers_0$gene,40)), name="m0_HLA_mod")
+mariola_FLS <-AddModuleScore(mariola_FLS , features = list(head(amp_fibros_markers_1$gene,40)), name="m1_CD55_mod")
+mariola_FLS <-AddModuleScore(mariola_FLS , features = list(head(amp_fibrosonly_2$gene,40)), name="m2_DKK3_mod")
+mariola_FLS <-AddModuleScore(mariola_FLS , features = list(head(amp_fibrosonly_3$gene,40)), name="m3_CD34_mod")
+
+DotPlot(mariola_FLS, features = c("m0_HLA_mod1", "m1_CD55_mod1", "m2_DKK3_mod1","m3_CD34_mod1", "DKK3"))+RotatedAxis()
+
+#following not saved in /rds/projects/c/croftap-runx1data01/Dkk3_analysis/DKK3_analysis_human_datasets/analysis.RData
+rm(list=ls()[! ls() %in% c("amp_fibros_markers_0","amp_fibros_markers_1", "amp_fibrosonly_2", "amp_fibrosonly_3", "markers_human_PS_LRRC15", "markers_human_PS_ADEMDEC1", "markers_human_PS_CCL19", "markers_human_PS_NPNT", "markers_human_PS_PI16")])
+load("/rds/projects/c/croftap-runx1data01/analysis_of_public_data_sets/BECON_analysis/becon_analysis.RData")
+
+
+becon_SL <-AddModuleScore(becon_SL , features = list(head(markers_human_PS_LRRC15$gene,40)), name="LRRC15_mod")
+becon_SL <-AddModuleScore(becon_SL , features = list(head(markers_human_PS_ADEMDEC1$gene,40)), name="ADEMDEC1_mod")
+becon_SL <-AddModuleScore(becon_SL , features = list(head(markers_human_PS_CCL19$gene,40)), name="CCL19_mod")
+becon_SL <-AddModuleScore(becon_SL , features = list(head(markers_human_PS_NPNT$gene,40)), name="NPNT_mod")
+becon_SL <-AddModuleScore(becon_SL , features = list(head(markers_human_PS_PI16$gene,40)), name="PI16_mod")
+
+DotPlot(becon_SL, features = c("LRRC15_mod1", "ADEMDEC1_mod1", "CCL19_mod1","NPNT_mod1", "PI16_mod1", "DKK3"))+RotatedAxis()
+
+becon_SL <-AddModuleScore(becon_SL , features = list(head(amp_fibros_markers_0$gene,40)), name="m0_HLA_mod")
+becon_SL <-AddModuleScore(becon_SL , features = list(head(amp_fibros_markers_1$gene,40)), name="m1_CD55_mod")
+becon_SL <-AddModuleScore(becon_SL , features = list(head(amp_fibrosonly_2$gene,40)), name="m2_DKK3_mod")
+becon_SL <-AddModuleScore(becon_SL , features = list(head(amp_fibrosonly_3$gene,40)), name="m3_CD34_mod")
+
+DotPlot(becon_SL, features = c("m0_HLA_mod1", "m1_CD55_mod1", "m2_DKK3_mod1","m3_CD34_mod1", "DKK3"))+RotatedAxis()
+
+```
+
