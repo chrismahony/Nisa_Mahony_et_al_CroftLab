@@ -364,3 +364,141 @@ merging<-AddMetaData(merging, all_anotations)
 
 Idents(merging) <- 'Annotations'
 SpatialDimPlot(merging, images = "slice1.13")
+
+
+#adjusting meta.data labels
+Idents(merging_subset)<-'first_type_nolining'
+merging_aggr$prediction_named_fibromerge<-merging_subset@active.ident
+merging_aggr$prediction_named_fibromerge<-paste(merging_aggr$named_clusters, merging_aggr$prediction_named_fibromerge, sep="_")
+table(merging_aggr$prediction_named_fibromerge)
+Idents(merging_aggr)<-'prediction_named_fibromerge'
+levels(merging_aggr)
+
+current.sample.ids <- c("Vascular Niche_Endothelial cells" ,        "Lining Layer Cells_Monocyte"      ,        "COMP+ Fibroblast Niche_Fibroblast"  ,     
+  "APOD+ GAS5+ FABP4+_Monocyte"  ,            "Lining Layer Cells_Fibroblast"       ,     "T Cell Rich Niche_Monocyte"        ,      
+  "Vascular Niche_Monocyte"     ,             "APOD+ GAS5+ FABP4+_Endothelial cells" ,    "B Cell Rich Niche_Endothelial cells",     
+ "T Cell Rich Niche_Endothelial cells",      "APOD+ GAS5+ FABP4+_Fibroblast"        ,    "B Cell Rich Niche_Monocyte"           ,   
+ "Erythrocytes_Fibroblast"            ,      "Erythrocytes_Monocyte"                 ,   "Vascular Niche_Fibroblast"             ,  
+ "B Cell Rich Niche_Fibroblast"       ,      "T Cell Rich Niche_T cell"              ,   "COMP+ Fibroblast Niche_Monocyte"      ,   
+ "Erythrocytes_Endothelial cells"     ,      "Lining Layer Cells_Endothelial cells" ,    "B Cell Rich Niche_T cell"             ,   
+ "B Cell Rich Niche_B cell"           ,      "COMP+ Fibroblast Niche_Endothelial cells", "T Cell Rich Niche_Fibroblast"         ,   
+ "APOD+ GAS5+ FABP4+_NA"              ,      "B Cell Rich Niche_NA"                 ,    "Erythrocytes_NA"                      ,   
+ "COMP+ Fibroblast Niche_NA"          ,      "APOD+ GAS5+ FABP4+_B cell"            ,    "Erythrocytes_B cell"                  ,   
+ "APOD+ GAS5+ FABP4+_T cell"          ,      "Vascular Niche_T cell"                ,    "Vascular Niche_B cell"                ,   
+ "T Cell Rich Niche_B cell"           ,      "T Cell Rich Niche_NA"                 ,    "COMP+ Fibroblast Niche_B cell"        ,   
+ "Erythrocytes_T cell"    )
+
+
+
+new.sample.ids <- c("Vascular Niche_Endothelial cells" ,        "Lining Layer Cells_Monocyte"      ,        "Fibro"  ,     
+  "APOD+ GAS5+ FABP4+_Monocyte"  ,            "Fibro"       ,     "T Cell Rich Niche_Monocyte"        ,      
+  "Vascular Niche_Monocyte"     ,             "APOD+ GAS5+ FABP4+_Endothelial cells" ,    "B Cell Rich Niche_Endothelial cells",     
+ "T Cell Rich Niche_Endothelial cells",      "Fibro"        ,    "B Cell Rich Niche_Monocyte"           ,   
+ "Fibro"            ,      "Erythrocytes_Monocyte"                 ,   "Fibro"             ,  
+ "Fibro"       ,      "T Cell Rich Niche_T cell"              ,   "COMP+ Fibroblast Niche_Monocyte"      ,   
+ "Erythrocytes_Endothelial cells"     ,      "Lining Layer Cells_Endothelial cells" ,    "B Cell Rich Niche_T cell"             ,   
+ "B Cell Rich Niche_B cell"           ,      "COMP+ Fibroblast Niche_Endothelial cells", "Fibro"         ,   
+ "APOD+ GAS5+ FABP4+_NA"              ,      "B Cell Rich Niche_NA"                 ,    "Erythrocytes_NA"                      ,   
+ "COMP+ Fibroblast Niche_NA"          ,      "APOD+ GAS5+ FABP4+_B cell"            ,    "Erythrocytes_B cell"                  ,   
+ "APOD+ GAS5+ FABP4+_T cell"          ,      "Vascular Niche_T cell"                ,    "Vascular Niche_B cell"                ,   
+ "T Cell Rich Niche_B cell"           ,      "T Cell Rich Niche_NA"                 ,    "COMP+ Fibroblast Niche_B cell"        ,   
+ "Erythrocytes_T cell"    )
+merging_aggr@meta.data[["prediction_named_fibromerge"]] <- plyr::mapvalues(x = merging_aggr@meta.data[["prediction_named_fibromerge"]], from = current.sample.ids, to = new.sample.ids)
+table(merging_aggr$prediction_named_fibromerge)
+
+
+Idents(merging_aggr)<-'Annotations_new'
+merging_aggr$Annotations_new_prediction_named_fibromerge<-paste(Idents(merging_aggr), merging_aggr$prediction_named_fibromerge, sep="_")
+Idents(merging_aggr)<-'Annotations_new_prediction_named_fibromerge'
+table(merging_aggr$Annotations_new_prediction_named_fibromerge)
+
+periAggr_Fibro  <- merging_aggr[,grepl("periAggr_Fibro", merging_aggr$Annotations_new_prediction_named_fibromerge, ignore.case=TRUE)]
+
+
+Idents(merging_subset)<-'first_type_nolining'
+merging$prediction_named_fibromerge<-merging_subset@active.ident
+merging$prediction_named_fibromerge<-paste(merging$named_clusters, merging$prediction_named_fibromerge, sep="_")
+table(merging$prediction_named_fibromerge)
+Idents(merging)<-'prediction_named_fibromerge'
+levels(merging)
+
+current.sample.ids <- c("Vascular Niche_Endothelial cells"     ,    "Lining Layer Cells_Monocyte"       ,       "COMP+ Fibroblast Niche_Fibroblast"  ,     
+  "APOD+ GAS5+ FABP4+_Monocyte"    ,          "Lining Layer Cells_Fibroblast"        ,    "T Cell Rich Niche_Monocyte"              ,
+ "Vascular Niche_Monocyte"         ,         "APOD+ GAS5+ FABP4+_Endothelial cells" ,    "B Cell Rich Niche_Endothelial cells"     ,
+ "T Cell Rich Niche_Endothelial cells",      "APOD+ GAS5+ FABP4+_Fibroblast"       ,     "B Cell Rich Niche_Monocyte"              ,
+ "Erythrocytes_Fibroblast"           ,       "Erythrocytes_Monocyte"               ,     "Vascular Niche_Fibroblast"               ,
+ "B Cell Rich Niche_Fibroblast"      ,       "T Cell Rich Niche_T cell"            ,     "COMP+ Fibroblast Niche_Monocyte"        , 
+ "Erythrocytes_Endothelial cells"    ,       "Lining Layer Cells_Endothelial cells" ,    "B Cell Rich Niche_T cell"               , 
+ "B Cell Rich Niche_B cell"         ,        "COMP+ Fibroblast Niche_Endothelial cells", "T Cell Rich Niche_Fibroblast"           , 
+ "APOD+ GAS5+ FABP4+_NA"            ,        "B Cell Rich Niche_NA"                ,     "Erythrocytes_NA"                        , 
+ "COMP+ Fibroblast Niche_NA"        ,        "APOD+ GAS5+ FABP4+_B cell"           ,     "Erythrocytes_B cell"                    , 
+ "APOD+ GAS5+ FABP4+_T cell"        ,        "Vascular Niche_T cell"               ,     "Vascular Niche_B cell"                 ,  
+ "T Cell Rich Niche_B cell"        ,         "T Cell Rich Niche_NA"                ,     "COMP+ Fibroblast Niche_B cell"         ,  
+ "Erythrocytes_T cell"             ,         "Lining Layer Cells_B cell"           ,     "Lining Layer Cells_NA"                 ,  
+ "Vascular Niche_NA"   )
+
+
+
+new.sample.ids <- c("Vascular Niche_Endothelial cells"     ,    "Lining Layer Cells_Monocyte"       ,       "Fibro"  ,     
+  "APOD+ GAS5+ FABP4+_Monocyte"    ,          "Fibro"        ,    "T Cell Rich Niche_Monocyte"              ,
+ "Vascular Niche_Monocyte"         ,         "APOD+ GAS5+ FABP4+_Endothelial cells" ,    "B Cell Rich Niche_Endothelial cells"     ,
+ "T Cell Rich Niche_Endothelial cells",      "Fibro"       ,     "B Cell Rich Niche_Monocyte"              ,
+ "Fibro"           ,       "Erythrocytes_Monocyte"               ,     "Fibro"               ,
+ "Fibro"      ,       "T Cell Rich Niche_T cell"            ,     "COMP+ Fibroblast Niche_Monocyte"        , 
+ "Erythrocytes_Endothelial cells"    ,       "Lining Layer Cells_Endothelial cells" ,    "B Cell Rich Niche_T cell"               , 
+ "B Cell Rich Niche_B cell"         ,        "COMP+ Fibroblast Niche_Endothelial cells", "Fibro"           , 
+ "APOD+ GAS5+ FABP4+_NA"            ,        "B Cell Rich Niche_NA"                ,     "Erythrocytes_NA"                        , 
+ "COMP+ Fibroblast Niche_NA"        ,        "APOD+ GAS5+ FABP4+_B cell"           ,     "Erythrocytes_B cell"                    , 
+ "APOD+ GAS5+ FABP4+_T cell"        ,        "Vascular Niche_T cell"               ,     "Vascular Niche_B cell"                 ,  
+ "T Cell Rich Niche_B cell"        ,         "T Cell Rich Niche_NA"                ,     "COMP+ Fibroblast Niche_B cell"         ,  
+ "Erythrocytes_T cell"             ,         "Lining Layer Cells_B cell"           ,     "Lining Layer Cells_NA"                 ,  
+ "Vascular Niche_NA"  )
+
+merging@meta.data[["prediction_named_fibromerge"]] <- plyr::mapvalues(x = merging@meta.data[["prediction_named_fibromerge"]], from = current.sample.ids, to = new.sample.ids)
+table(merging$prediction_named_fibromerge)
+
+Idents(merging)<-'Annotations_new'
+merging$Annotations_new_prediction_named_fibromerge<-paste(Idents(merging), merging$prediction_named_fibromerge, sep="_")
+Idents(merging)<-'Annotations_new_prediction_named_fibromerge'
+table(merging$Annotations_new_prediction_named_fibromerge)
+
+periVasc_Fibro  <- merging[,grepl("periVasc_Fibro", merging$Annotations_new_prediction_named_fibromerge, ignore.case=TRUE)]
+
+periVasc_Fibro
+
+
+cellstoremove <- colnames(periVasc_Fibro@assays$Spatial)[(colnames(periVasc_Fibro@assays$Spatial) %in% colnames(periAggr_Fibro@assays$Spatial))]
+
+
+periAggr_Fibro_filt <- periAggr_Fibro[,!(colnames(periAggr_Fibro@assays$Spatial) %in% cellstoremove)]
+periVasc_Fibro_filt <- periVasc_Fibro[,!(colnames(periVasc_Fibro@assays$Spatial) %in% cellstoremove)]
+
+periAggr_Fibro_filt$ident<-'periAggr_fibros'
+periVasc_Fibro_filt$ident<-'periVacs_fibros'
+
+
+library(tidyverse)
+colnames_periAggr_Fibro_filt<-colnames(periAggr_Fibro_filt)
+colnames_periVasc_Fibro_filt<-colnames(periVasc_Fibro_filt)
+colnames_periAggr_Fibro_filt<-as.data.frame(colnames_periAggr_Fibro_filt)
+colnames_periVasc_Fibro_filt<-as.data.frame(colnames_periVasc_Fibro_filt)
+colnames_periAggr_Fibro_filt$ident<-'periAggr_fibros'
+colnames_periVasc_Fibro_filt$ident<-'periVacs_fibros'
+colnames_periAggr_Fibro_filt <- colnames_periAggr_Fibro_filt %>% remove_rownames %>% column_to_rownames(var="colnames_periAggr_Fibro_filt")
+colnames_periVasc_Fibro_filt <- colnames_periVasc_Fibro_filt %>% remove_rownames %>% column_to_rownames(var="colnames_periVasc_Fibro_filt")
+colnames_to_keep<-rbind(colnames_periAggr_Fibro_filt, colnames_periVasc_Fibro_filt)
+
+
+perAggr_perVasc_fibros <- merging[,(colnames(merging@assays$Spatial) %in% rownames(colnames_to_keep))]
+
+perAggr_perVasc_fibros<-AddMetaData(perAggr_perVasc_fibros, colnames_to_keep)
+perAggr_perVasc_fibros <- perAggr_perVasc_fibros %>%
+    ScaleData()
+perAggr_perVasc_fibros<-FindVariableFeatures(perAggr_perVasc_fibros, assay = 'Spatial')
+perAggr_perVasc_fibros<-RunPCA(perAggr_perVasc_fibros)
+Idents(perAggr_perVasc_fibros)<-'ident'
+Markers_periAggr_vsperiVas<-FindAllMarkers(perAggr_perVasc_fibros, only.pos = T)
+DotPlot(perAggr_perVasc_fibros, features = c("APOD", "FOS", "FOSB", "HLA-DRA", "HLA-DPA1", "C1QB", "IGLC1", "IGHG4"))+RotatedAxis()
+
+
+
