@@ -1,0 +1,964 @@
+```{r}
+
+library(readxl)
+
+rm(list=ls()[! ls() %in% c("merging")])
+df <- read_excel("/rds/projects/c/croftap-visium-manuscript-01/matrisome_hs_masterlist.xls")
+
+
+
+```
+
+
+```{r}
+
+markers_fibs <- read_csv("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/markers_fibs.csv")
+
+markers_fibs <- markers_fibs %>% filter(p_val_adj<0.05)
+markers_fibs <- markers_fibs %>% cSplit(splitCols = "cluster", sep=" ")
+markers_fibs <- markers_fibs %>% filter(cluster_1 == "Fibroblast")
+
+matrisome_clusters_overlap <- markers_fibs[markers_fibs$gene %in% df$genes,]
+
+matrisome_clusters_overlap$cluster <- paste(matrisome_clusters_overlap$cluster_1, matrisome_clusters_overlap$cluster_2, matrisome_clusters_overlap$cluster_3, matrisome_clusters_overlap$cluster_4, matrisome_clusters_overlap$cluster_5, matrisome_clusters_overlap$cluster_6)
+
+markers_fibs$cluster <- paste(markers_fibs$cluster_1, markers_fibs$cluster_2, markers_fibs$cluster_3, markers_fibs$cluster_4, markers_fibs$cluster_5, matrisome_clusters_overlap$cluster_6)
+
+df_overlap <- table(matrisome_clusters_overlap$cluster) %>% as.data.frame()
+df_overlap <- df_overlap[-2,]
+
+df2 <- table(markers_fibs$cluster) %>% as.data.frame()
+df2 <- df2[-c(2,4),]
+df_overlap$Freq.y <- df2$Freq
+
+df_overlap$pct <- df_overlap$Freq/df_overlap$Freq.y*100
+
+
+df_overlap$Var1 <- c("Interstitial", "Fibrotic", "Lining layer", "Lymphocytic", "Vascular")
+
+ggplot(df_overlap, aes(x=Freq, y=pct)) + 
+  geom_point(size=2)+theme_ArchR()+ geom_text_repel(aes(label = df_overlap$Var1),
+                    size = 3.5) +
+  geom_hline(yintercept=max(df_overlap$Freq.y)/2, linetype='dotted', col = 'red', size=1.5)+geom_vline(xintercept = max(df_overlap$Freq)/2, linetype="dotted", 
+                color = "red", size=1.5)
+
+
+ggplot(df_overlap, aes(x=Freq, y=pct)) + 
+  geom_point(size=3)+theme_ArchR()+ 
+  geom_hline(yintercept=max(df_overlap$Freq.y)/2, linetype='dotted', col = 'red', size=1.5)+geom_vline(xintercept = max(df_overlap$Freq)/2, linetype="dotted", 
+                color = "red", size=1.5)
+```
+
+
+
+
+```{r}
+Idents(merging) <- 'named_clusters'
+levels(merging)
+merging_clean<-subset(merging, idents=c( "T Cell Rich Niche" ,     "B Cell Rich Niche"  ,    "Vascular Niche"    ,    "Lining Layer Cells"   ,  "COMP+ Fibroblast Niche", "APOD+ GAS5+ FABP4+"     ))
+
+```
+
+
+
+
+```{r}
+
+Idents(merging_clean) <- 'first_type_nolining_niche'
+mylist_sub <- levels(merging_clean)[grep('Fibroblast ', levels(merging_clean))]
+
+
+
+DefaultAssay(merging_clean) <- 'Spatial'
+#Idents(merging_clean) <- 'named_clusters'
+dotplot<-DotPlot(merging_clean, features = unique(df$genes), ident=mylist_sub[c(1,2,3,4,8)])
+
+dotplot<-dotplot$data
+
+
+library(tidyr)
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, border = T, show_row_names = F)
+
+
+```
+
+```{r}
+library(tidyr)
+
+unique(df$Category)
+
+df_col <- df %>% filter(Category == "Collagens")
+
+dotplot<-DotPlot(merging_clean, features = unique(df_col$genes), ident=mylist_sub[c(1,2,3,4,8)])
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, border = T, row_names_gp = gpar(fontsize = 8))
+```
+
+```{r}
+
+
+library(tidyr)
+
+
+DefaultAssay(merging_clean) <- 'Spatial'
+#Idents(merging_clean) <- 'named_clusters'
+
+unique(df$Category)
+
+df_reg <- df %>% filter(Category == "ECM Regulators")
+
+df_reg <- df %>% filter(grepl("MMP|ADAM",genes))
+
+
+dotplot<-DotPlot(merging_clean, features = unique(df_reg$genes), ident=mylist_sub[c(1,2,3,4,5,8)])
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, border = T, row_names_gp = gpar(fontsize = 8))
+
+
+df_list <- list()
+for (i in 1:length(unique(df$Category))){
+  df_list[[i]] <- df %>% filter(Category == unique(df$Category)[[i]])
+   merging_clean <- AddModuleScore(merging_clean, features = list(df_list[[i]]$genes), name=unique(df$Category)[[i]]) 
+  }
+
+merging_clean$ECM.Glycoproteins1
+
+dotplot<-DotPlot(merging_clean, features = c("Secreted.Factors1", "ECM.Regulators1", "ECM.affiliated.Proteins1", "Proteoglycans1", "Collagens1", "ECM.Glycoproteins1"), ident=mylist_sub[c(1,2,3,4,5,8)])
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, border = T, row_names_gp = gpar(fontsize = 8))
+
+
+
+```
+
+
+```{r}
+
+
+DefaultAssay(merging_clean) <- 'Spatial'
+
+Idents(merging_clean) <- 'first_type_nolining_niche'
+mylist_sub <- levels(merging_clean)[grep('T cell ', levels(merging_clean))]
+
+rownames(merging_clean)[grep("MMP", rownames(merging_clean))]
+
+
+dotplot<-DotPlot(merging_clean, features = c("Secreted.Factors1", "ECM.Regulators1", "ECM.affiliated.Proteins1", "Proteoglycans1", "Collagens1", "ECM.Glycoproteins1"), ident=mylist_sub)
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, border = T, row_names_gp = gpar(fontsize = 8))
+
+```
+
+
+```{r}
+
+dotplot <- dotplot %>% as.data.frame()
+
+
+df_Collagens<-dotplot[rownames(dotplot) %in% Collagens,]
+df_Proteoglycans<-dotplot[rownames(dotplot) %in% Proteoglycans ,]
+df_ECMaffiliatedProteins<-dotplot[rownames(dotplot) %in% ECMaffiliatedProteins,]
+df_ECMGlycoproteins<-dotplot[rownames(dotplot) %in% ECMGlycoproteins,]
+df_ECMRegulators<-dotplot[rownames(dotplot) %in% ECMRegulators,]
+df_SecretedFactors<-dotplot[rownames(dotplot) %in% SecretedFactors,]
+
+
+#renames the matrisome column
+df_Collagens$matrisome<-"Collagens"
+df_Proteoglycans $matrisome<-"Proteoglycans"
+df_ECMaffiliatedProteins$matrisome<-"ECMaffiliatedProteins"
+df_ECMGlycoproteins$matrisome<-"ECMGlycoproteins"
+df_ECMRegulators$matrisome<-"ECMRegulators"
+df_SecretedFactors$matrisome<-"SecretedFactors"
+
+#combine all named
+All_named<-rbind(df_Collagens, df_Proteoglycans, df_ECMGlycoproteins, df_ECMaffiliatedProteins, df_ECMRegulators, df_SecretedFactors)
+
+#extract all unammed
+Df_unamed<-dotplot[!rownames(dotplot) %in% rownames(All_named),]
+
+#combine all
+All_all<-rbind(Df_unamed, All_named)
+
+
+cols_plot <- colnames(All_all)[-7]
+ECM_ls <- list()
+ECM_ls[[1]] <-All_all %>%  filter(`Fibroblast COMP+ Fibroblast Niche` > 1)
+ECM_ls[[2]] <-All_all %>%  filter(`Fibroblast Lining Layer Cells` > 1)
+ECM_ls[[3]] <-All_all %>%  filter(`Fibroblast APOD+ GAS5+ FABP4+` > 1)
+ECM_ls[[4]] <-All_all %>%  filter(`Fibroblast Vascular Niche` > 1)
+ECM_ls[[5]] <-All_all %>%  filter(`Fibroblast B Cell Rich Niche` > 1)
+ECM_ls[[6]] <-All_all %>%  filter(`Fibroblast T Cell Rich Niche` > 1)
+names(ECM_ls) <- cols_plot
+
+pal <- c(
+  "Collagens" = "blue",
+  "Proteoglycans" = "purple", 
+  "ECMGlycoproteins" = "royalblue", 
+  "ECMaffiliatedProteins" = "orange" ,
+  "ECMRegulators" = "yellow",
+  "SecretedFactors" = "green", 
+  "non-selected" = "grey"
+  
+)
+
+ps_ls <- list()
+ggplots <- list()
+for (i in 1:length(cols_plot)){
+  ps_ls[[i]]<-as.data.frame(table(ECM_ls[[i]]$matrisome))
+  ggplots[[i]] <- ggplot(data=ps_ls[[i]], aes(x=Var1 , y=Freq, fill=Var1)) +
+  geom_bar(stat="identity")+RotatedAxis()+ coord_flip()+theme_minimal()+ggtitle(cols_plot[[i]])+ scale_fill_manual(values=pal)+ylim(0,70)+ theme(legend.position = "none",axis.title.y = element_blank(), axis.title.x = element_blank())
+}
+
+plot_grid(ggplots[[1]], ggplots[[2]], ggplots[[3]], ggplots[[4]], ggplots[[5]], ggplots[[6]], ncol=3, nrow=2)
+
+```
+
+
+```{r}
+
+
+
+
+
+```
+
+
+
+```{r}
+
+DefaultAssay(merging_clean) <- 'Spatial'
+
+merging_clean <- merging_clean %>% 
+                NormalizeData()
+
+
+Idents(merging_clean) <- 'first_type_nolining_niche'
+mylist_sub <- levels(merging_clean)[grep('Fibroblast ', levels(merging_clean))]
+merging_clean_fibs<-subset(merging_clean, idents=mylist_sub[-c(6,7,9,10)])
+
+DefaultAssay(merging_clean_fibs) <- 'Spatial'
+dotplot<-DotPlot(merging_clean_fibs, features = unique(df$genes))
+
+dotplot<-dotplot$data
+
+
+dotplot %>%
+    group_by(id) %>%
+    top_n(n = 10, wt = avg.exp.scaled) -> top10
+
+
+library(tidyr)
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+#Get a ECM score
+Idents(merging) <- 'pathotype'
+levels(merging)
+
+
+Idents(merging) <- 'pathotype'
+merging$patho_ident <- paste(merging$first_type_nolining, merging$pathotype)
+Idents(merging) <- 'patho_ident'
+levels_plot <- levels(merging)[grep("Fibroblast ", levels(merging))]
+
+
+
+DefaultAssay(merging) <- "Spatial"
+LM_vs_PI_markers <- FindMarkers(merging, ident.1 = levels_plot[2], ident.2 = levels_plot[1])
+
+#DE ECM Gs across all PI and LM smaples
+
+
+
+
+
+
+```
+```{r}
+LM_vs_PI_markers$matrisome <- "non-selected"
+
+LM_vs_PI_markers$gene <- rownames(LM_vs_PI_markers)
+
+
+markers_Lymph2vsFibrotic <- LM_vs_PI_markers
+
+ECMGlycoproteins_df <- df[df$Category == 'ECM Glycoproteins',]
+Collagens_df <- df[df$Category == 'Collagens',]
+Proteoglycans_df <- df[df$Category == 'Proteoglycans',]
+ECMaffiliatedProteins_df <- df[df$Category == 'ECM-affiliated Proteins',]
+ECMRegulators_df <- df[df$Category == 'ECM Regulators',]
+SecretedFactors_df <- df[df$Category == 'Secreted Factors',]
+
+# define different ECM CATEGORIES that will be shaded
+Collagens <- Collagens_df$genes
+Proteoglycans <- Proteoglycans_df$genes
+ECMaffiliatedProteins <- ECMaffiliatedProteins_df$genes
+ECMGlycoproteins <- ECMGlycoproteins_df$genes
+ECMRegulators <- ECMRegulators_df$genes
+SecretedFactors <- SecretedFactors_df$genes
+
+
+#extracct the specific ECM genes from your df
+df_Collagens<-markers_Lymph2vsFibrotic[rownames(markers_Lymph2vsFibrotic) %in% Collagens,]
+df_Proteoglycans<-markers_Lymph2vsFibrotic[rownames(markers_Lymph2vsFibrotic) %in% Proteoglycans ,]
+df_ECMaffiliatedProteins<-markers_Lymph2vsFibrotic[rownames(markers_Lymph2vsFibrotic) %in% ECMaffiliatedProteins,]
+df_ECMGlycoproteins<-markers_Lymph2vsFibrotic[rownames(markers_Lymph2vsFibrotic) %in% ECMGlycoproteins,]
+df_ECMRegulators<-markers_Lymph2vsFibrotic[rownames(markers_Lymph2vsFibrotic) %in% ECMRegulators,]
+df_SecretedFactors<-markers_Lymph2vsFibrotic[rownames(markers_Lymph2vsFibrotic) %in% SecretedFactors,]
+
+
+#renames the matrisome column
+df_Collagens$matrisome<-"Collagens"
+df_Proteoglycans $matrisome<-"Proteoglycans"
+df_ECMaffiliatedProteins$matrisome<-"ECMaffiliatedProteins"
+df_ECMGlycoproteins$matrisome<-"ECMGlycoproteins"
+df_ECMRegulators$matrisome<-"ECMRegulators"
+df_SecretedFactors$matrisome<-"SecretedFactors"
+
+df_Collagens$colour<-"blue"
+df_Proteoglycans $colour<-"purple"
+df_ECMaffiliatedProteins$colour<-"orange"
+df_ECMGlycoproteins$colour<-"royalblue"
+df_ECMRegulators$colour<-"yellow"
+df_SecretedFactors$colour<-"green"
+markers_Lymph2vsFibrotic$colour <- "grey" 
+
+
+
+#combine all named
+All_named<-rbind(df_Collagens, df_Proteoglycans, df_ECMGlycoproteins, df_ECMaffiliatedProteins, df_ECMRegulators, df_SecretedFactors)
+
+#extract all unammed
+Df_unamed<-markers_Lymph2vsFibrotic[!rownames(markers_Lymph2vsFibrotic) %in% rownames(All_named),]
+
+#combine all
+All_all<-rbind(Df_unamed, All_named)
+
+#assing a colur depending on the type of ECM thing
+keyvals <- All_all$colour
+names(keyvals)[keyvals == 'blue'] <- 'Collagens'
+names(keyvals)[keyvals == 'purple'] <- 'Proteoglycans'
+names(keyvals)[keyvals == 'royalblue'] <- 'ECMGlycoproteins'
+names(keyvals)[keyvals == 'orange'] <- 'ECMaffiliatedProteins'
+names(keyvals)[keyvals == 'yellow'] <- 'ECMRegulators'
+names(keyvals)[keyvals == 'green'] <- 'SecretedFactors'
+names(keyvals)[keyvals == 'grey'] <- 'non-selected'
+
+
+
+
+EnhancedVolcano(All_all,
+                lab = rownames(All_all),
+                selectLab = rownames(All_all)[which(names(keyvals) %in% c('Collagens', 'Proteoglycans', 'ECMGlycoproteins', 'ECMaffiliatedProteins', 'ECMRegulators', 'SecretedFactors'))],
+                x = 'avg_log2FC',
+                y = 'p_val_adj',
+                title = 'markers_Lymph2vsFibrotic',
+                colCustom = keyvals,
+                subtitle = "ECM MATRISOME genes",
+                FCcutoff = 0.25,
+                pCutoff = 0.05,
+                pointSize = 3.0,
+                labSize = 4, 
+                max.overlaps=500, cutoffLineWidth = 0.3,
+                gridlines.major = FALSE,
+                gridlines.minor = FALSE,
+                legendLabSize = 5,
+                legendIconSize =3.0,
+                
+)
+
+
+All_all$gene <- rownames(All_all)
+
+
+EnhancedVolcano(All_all,
+                lab = rownames(All_all),
+                selectLab = c("COL1A1", "COL3A1", "COL6A1", "MMP3", "MMP1", "MMP9", "CCL5", "CCL19",  "CCL2", "CXCL1", "CXCL14", "POSTN", "COL1A2", "COMP", "COL16A1", "COL6A2"),
+                x = 'avg_log2FC',
+                y = 'p_val_adj',
+                title = 'markers_Lymph2vsFibrotic',
+                colCustom = keyvals,
+                subtitle = "ECM MATRISOME genes",
+                FCcutoff = 0.25,
+                pCutoff = 0.05,
+                pointSize = 3.0,
+                labSize = 4, 
+                max.overlaps=500, cutoffLineWidth = 0.3,
+                gridlines.major = FALSE,
+                gridlines.minor = FALSE,
+                legendLabSize = 5,
+                legendIconSize =3.0,
+                
+)
+
+
+
+EnhancedVolcano(All_all,
+                lab = rownames(All_all),
+                selectLab = "",
+                x = 'avg_log2FC',
+                y = 'p_val_adj',
+                title = 'markers_Lymph2vsFibrotic',
+                colCustom = keyvals,
+                subtitle = "ECM MATRISOME genes",
+                FCcutoff = 0.25,
+                pCutoff = 0.05,
+                pointSize = 3.0,
+                labSize = 4, 
+                max.overlaps=500, cutoffLineWidth = 0.3,
+                gridlines.major = FALSE,
+                gridlines.minor = FALSE,
+                legendLabSize = 5,
+                legendIconSize =3.0,
+                
+)
+
+
+
+
+
+
+All_all_up<-All_all[All_all$avg_log2FC > 0.1,]
+pt<-as.data.frame(table(All_all_up$matrisome))
+pt<-pt[!pt$Var1=="non-selected",]
+
+
+pal <- c(
+  "Collagens" = "blue",
+  "Proteoglycans" = "purple", 
+  "ECMGlycoproteins" = "royalblue", 
+  "ECMaffiliatedProteins" = "orange" ,
+  "ECMRegulators" = "yellow",
+  "SecretedFactors" = "green", 
+  "non-selected" = "grey"
+  
+)
+
+
+ggplot(data=pt, aes(x=Var1 , y=Freq, fill=Var1)) +
+  geom_bar(stat="identity")+RotatedAxis()+ coord_flip()+theme_minimal()+ggtitle("up")+ scale_color_manual(values=pal)+ylim(0,30)+ theme(legend.position = "none",axis.title.y = element_blank(), axis.title.x = element_blank())
+
+
+pt_up_genes <- pt
+
+
+All_all_down<-All_all[All_all$avg_log2FC < -0.1,]
+pt<-as.data.frame(table(All_all_down$matrisome))
+pt<-pt[!pt$Var1=="non-selected",]
+
+pt_down_gene <- pt
+
+
+pt_up_genes$group <- 'PI'
+pt_down_gene$group <- 'LM'
+pt_down_gene$Freq <- (pt_down_gene$Freq)*-1
+
+ggplot(data=pt, aes(x=Var1 , y=Freq)) +
+  geom_bar(stat="identity")+RotatedAxis()+ coord_flip()+theme_minimal()+ggtitle("down")+ylim(0,30)+ scale_color_manual(values=pal)
+
+
+
+temp_df <-
+  rbind(pt_up_genes, pt_down_gene) %>% 
+  arrange(Freq)
+the_order <- temp_df$Var1
+
+
+rbind(pt_up_genes, pt_down_gene) %>% ggplot(aes(x=Var1 , y=Freq, group = group, fill = Var1)) +
+  geom_bar(stat="identity")+RotatedAxis()+ coord_flip()+theme_minimal()+ggtitle("combined")+ylim(-20,30)+ scale_fill_manual(values=pal)
+
+
+
+write.csv(All_all, "/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/supp_tables/s6e_fibs.csv")
+
+```
+```{r}
+
+
+Idents(merging) <- 'Annotations_new_new'
+levels(merging)
+DefaultAssay(merging) <- "Spatial"
+pvasc_vs_paggr_markers <- FindMarkers(merging, ident.1 = "periVasc_fibro", ident.2 = "periAggr_fibro")
+
+
+pvasc_vs_paggr_markers$matrisome <- "non-selected"
+
+
+markers_Lymph2vsFibrotic <- pvasc_vs_paggr_markers
+
+ECMGlycoproteins_df <- df[df$Category == 'ECM Glycoproteins',]
+Collagens_df <- df[df$Category == 'Collagens',]
+Proteoglycans_df <- df[df$Category == 'Proteoglycans',]
+ECMaffiliatedProteins_df <- df[df$Category == 'ECM-affiliated Proteins',]
+ECMRegulators_df <- df[df$Category == 'ECM Regulators',]
+SecretedFactors_df <- df[df$Category == 'Secreted Factors',]
+
+# define different ECM CATEGORIES that will be shaded
+Collagens <- Collagens_df$genes
+Proteoglycans <- Proteoglycans_df$genes
+ECMaffiliatedProteins <- ECMaffiliatedProteins_df$genes
+ECMGlycoproteins <- ECMGlycoproteins_df$genes
+ECMRegulators <- ECMRegulators_df$genes
+SecretedFactors <- SecretedFactors_df$genes
+
+
+#extracct the specific ECM genes from your df
+df_Collagens<-markers_Lymph2vsFibrotic[rownames(markers_Lymph2vsFibrotic) %in% Collagens,]
+df_Proteoglycans<-markers_Lymph2vsFibrotic[rownames(markers_Lymph2vsFibrotic) %in% Proteoglycans ,]
+df_ECMaffiliatedProteins<-markers_Lymph2vsFibrotic[rownames(markers_Lymph2vsFibrotic) %in% ECMaffiliatedProteins,]
+df_ECMGlycoproteins<-markers_Lymph2vsFibrotic[rownames(markers_Lymph2vsFibrotic) %in% ECMGlycoproteins,]
+df_ECMRegulators<-markers_Lymph2vsFibrotic[rownames(markers_Lymph2vsFibrotic) %in% ECMRegulators,]
+df_SecretedFactors<-markers_Lymph2vsFibrotic[rownames(markers_Lymph2vsFibrotic) %in% SecretedFactors,]
+
+
+#renames the matrisome column
+df_Collagens$matrisome<-"Collagens"
+df_Proteoglycans $matrisome<-"Proteoglycans"
+df_ECMaffiliatedProteins$matrisome<-"ECMaffiliatedProteins"
+df_ECMGlycoproteins$matrisome<-"ECMGlycoproteins"
+df_ECMRegulators$matrisome<-"ECMRegulators"
+df_SecretedFactors$matrisome<-"SecretedFactors"
+
+df_Collagens$colour<-"blue"
+df_Proteoglycans $colour<-"purple"
+df_ECMaffiliatedProteins$colour<-"orange"
+df_ECMGlycoproteins$colour<-"royalblue"
+df_ECMRegulators$colour<-"yellow"
+df_SecretedFactors$colour<-"green"
+markers_Lymph2vsFibrotic$colour <- "grey" 
+
+
+
+#combine all named
+All_named<-rbind(df_Collagens, df_Proteoglycans, df_ECMGlycoproteins, df_ECMaffiliatedProteins, df_ECMRegulators, df_SecretedFactors)
+
+#extract all unammed
+Df_unamed<-markers_Lymph2vsFibrotic[!rownames(markers_Lymph2vsFibrotic) %in% rownames(All_named),]
+
+#combine all
+All_all<-rbind(Df_unamed, All_named)
+
+#assing a colur depending on the type of ECM thing
+keyvals <- All_all$colour
+names(keyvals)[keyvals == 'blue'] <- 'Collagens'
+names(keyvals)[keyvals == 'purple'] <- 'Proteoglycans'
+names(keyvals)[keyvals == 'royalblue'] <- 'ECMGlycoproteins'
+names(keyvals)[keyvals == 'orange'] <- 'ECMaffiliatedProteins'
+names(keyvals)[keyvals == 'yellow'] <- 'ECMRegulators'
+names(keyvals)[keyvals == 'green'] <- 'SecretedFactors'
+names(keyvals)[keyvals == 'grey'] <- 'non-selected'
+
+
+
+
+EnhancedVolcano(All_all,
+                lab = rownames(All_all),
+                selectLab = rownames(All_all)[which(names(keyvals) %in% c('Collagens', 'Proteoglycans', 'ECMGlycoproteins', 'ECMaffiliatedProteins', 'ECMRegulators', 'SecretedFactors'))],
+                x = 'avg_log2FC',
+                y = 'p_val_adj',
+                title = 'markers_Lymph2vsFibrotic',
+                colCustom = keyvals,
+                subtitle = "ECM MATRISOME genes",
+                FCcutoff = 0.25,
+                pCutoff = 0.05,
+                pointSize = 3.0,
+                labSize = 4, 
+                max.overlaps=500, cutoffLineWidth = 0.3,
+                gridlines.major = FALSE,
+                gridlines.minor = FALSE,
+                legendLabSize = 5,
+                legendIconSize =3.0,
+                
+)
+
+
+EnhancedVolcano(All_all,
+                lab = rownames(All_all),
+                selectLab = c("COL1A1", "COL4A1", "COL6A1"),
+                x = 'avg_log2FC',
+                y = 'p_val_adj',
+                title = 'markers_Lymph2vsFibrotic',
+                colCustom = keyvals,
+                subtitle = "ECM MATRISOME genes",
+                FCcutoff = 0.25,
+                pCutoff = 0.05,
+                pointSize = 3.0,
+                labSize = 4, 
+                max.overlaps=500, cutoffLineWidth = 0.3,
+                gridlines.major = FALSE,
+                gridlines.minor = FALSE,
+                legendLabSize = 5,
+                legendIconSize =3.0,
+                
+)
+
+EnhancedVolcano(All_all,
+                lab = rownames(All_all),
+                selectLab = "COL3A1",
+                x = 'avg_log2FC',
+                y = 'p_val_adj',
+                title = 'markers_Lymph2vsFibrotic',
+                colCustom = keyvals,
+                subtitle = "ECM MATRISOME genes",
+                FCcutoff = 0.25,
+                pCutoff = 0.05,
+                pointSize = 3.0,
+                labSize = 4, 
+                max.overlaps=500, cutoffLineWidth = 0.3,
+                gridlines.major = FALSE,
+                gridlines.minor = FALSE,
+                legendLabSize = 5,
+                legendIconSize =3.0,
+                
+)
+
+
+
+
+
+
+All_all_up<-All_all[All_all$avg_log2FC > 0.1,]
+pt<-as.data.frame(table(All_all_up$matrisome))
+pt<-pt[!pt$Var1=="non-selected",]
+
+
+pal <- c(
+  "Collagens" = "blue",
+  "Proteoglycans" = "purple", 
+  "ECMGlycoproteins" = "royalblue", 
+  "ECMaffiliatedProteins" = "orange" ,
+  "ECMRegulators" = "yellow",
+  "SecretedFactors" = "green", 
+  "non-selected" = "grey"
+  
+)
+
+
+ggplot(data=pt, aes(x=Var1 , y=Freq, fill=Var1)) +
+  geom_bar(stat="identity")+RotatedAxis()+ coord_flip()+theme_minimal()+ggtitle("up")+ scale_color_manual(values=pal)+ylim(0,30)+ theme(legend.position = "none",axis.title.y = element_blank(), axis.title.x = element_blank())
+
+
+pt_up_genes <- pt
+
+
+All_all_down<-All_all[All_all$avg_log2FC < -0.1,]
+pt<-as.data.frame(table(All_all_down$matrisome))
+pt<-pt[!pt$Var1=="non-selected",]
+
+pt_down_gene <- pt
+
+
+pt_up_genes$group <- 'PI'
+pt_down_gene$group <- 'LM'
+pt_down_gene$Freq <- (pt_down_gene$Freq)*-1
+
+ggplot(data=pt, aes(x=Var1 , y=Freq)) +
+  geom_bar(stat="identity")+RotatedAxis()+ coord_flip()+theme_minimal()+ggtitle("down")+ylim(0,30)+ scale_color_manual(values=pal)
+
+
+
+temp_df <-
+  rbind(pt_up_genes, pt_down_gene) %>% 
+  arrange(Freq)
+the_order <- temp_df$Var1
+
+
+
+rbind(pt_up_genes, pt_down_gene) %>% ggplot(aes(x=factor(Var1, level=rev(c('ECMaffiliatedProteins', 'SecretedFactors', 'Proteoglycans', 'ECMRegulators', 'ECMGlycoproteins', 'Collagens'))), y=Freq, group = group, fill = Var1)) +
+  geom_bar(stat="identity")+RotatedAxis()+ coord_flip()+theme_minimal()+ggtitle("combined")+ylim(-20,30)+ scale_fill_manual(values=pal)
+
+
+VlnPlot(merging, features = "COL3A1")
+
+```
+
+
+```{r}
+#pull fibotic and t cell maitrisome genes
+
+DefaultAssay(merging_clean) <- 'Spatial'
+
+merging_clean <- merging_clean %>% 
+                NormalizeData()
+
+
+Idents(merging_clean) <- 'first_type_nolining_niche'
+mylist_sub <- levels(merging_clean)[grep('Fibroblast ', levels(merging_clean))]
+merging_clean_fibs<-subset(merging_clean, idents=mylist_sub[-c(6,7,9,10)])
+
+DefaultAssay(merging_clean_fibs) <- 'Spatial'
+dotplot<-DotPlot(merging_clean_fibs, features = unique(df$genes))
+
+dotplot<-dotplot$data
+
+dotplot_fibrotic <- dotplot[dotplot$id == "Fibroblast COMP+ Fibroblast Niche",]
+dotplot_fibrotic <- dotplot_fibrotic[dotplot_fibrotic$avg.exp.scaled > 1.5,]
+dotplot_fibrotic <- na.omit(dotplot_fibrotic)
+
+#dotplot_fibrotic %>%
+#        top_n(n = 10, wt = avg.exp.scaled) -> top10_firbotic
+
+
+
+
+
+
+```
+
+
+
+```{r}
+# PI vs LM and COMP over lap
+
+
+#split df in to
+names <- unique(dotplot$id)
+gene <- list()
+for (i in 1:length(names)){
+gene[[i]] <- dotplot %>%  filter(id == names[[i]]) %>% filter(avg.exp.scaled > 1)
+}
+names(gene) <- names
+gene[[7]] <- LM_vs_PI_markers[LM_vs_PI_markers$avg_log2FC > 0.1,]
+
+library(UpSetR)
+
+myGeneSets <- list(
+  set1 = rownames(gene[[1]]),
+  set2 = rownames(gene[[2]]),
+  set3 = rownames(gene[[3]]),
+   set4 = rownames(gene[[4]]),
+   set5 = rownames(gene[[5]]),
+     set6 = rownames(gene[[6]]),
+      set7 = rownames(gene[[7]])
+  )
+
+
+#names(myGeneSets) <- names(gene)
+
+
+upset(fromList(myGeneSets), nsets = 14, intersections = list(list("set1", "set2"),list("set1","set3"), list("set1","set4"),list("set1","set5"),list("set1","set6"),list("set1","set7")))
+
+IFNg_vs_NS_new2 <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/IFNg_vs_NS_new2.csv", row.names = 1)
+
+myGeneSets_IFN_LM <- list(
+  IFNg = IFNg_vs_NS_new2 %>% filter(log2FoldChange > 0.1 & padj <0.05) %>% rownames(),
+    LM_genes = LM_vs_PI_markers %>% filter(avg_log2FC < -0.1 & p_val_adj <0.05) %>% rownames()
+  )
+library(UpSetR)
+upset(fromList(myGeneSets_IFN_LM))
+```
+
+```{r}
+
+med_fibs_markers <- read_csv("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/med_fibs_markers.csv")
+
+ rownames()
+
+
+myGeneSets_IFN_LM <- list(
+  IFNg = IFNg_vs_NS_new2 %>% filter(log2FoldChange > 0.1 & padj <0.05) %>% rownames(),
+    C11_genes = med_fibs_markers %>% filter(cluster== "CXCL10+CCL19+ C11") %>% filter(avg_log2FC > 0.1 & p_val_adj <0.05)  %>% rownames()
+  )
+library(UpSetR)
+upset(fromList(myGeneSets_IFN_LM))
+
+```
+
+
+
+
+```{r}
+
+
+#valide their expression- module, cell dive expression of fibrotic ones, distance analysis
+
+DefaultAssay(merging_clean) <- 'SCT'
+
+for (i in 1:(length(gene)-1)){
+  merging_clean <- AddModuleScore(merging_clean, features = list(gene[[i]]$features.plot), name=names(gene)[[i]])
+  }
+
+
+
+Idents(merging_clean) <- 'first_type_nolining_niche'
+mylist_sub <- levels(merging_clean)[grep('Fibroblast ', levels(merging_clean))]
+
+feature <- colnames(merging_clean@meta.data)[grep('Fibroblast', colnames(merging_clean@meta.data))]
+
+DotPlot(merging_clean, features=feature[-c(1:3)], idents=mylist_sub[-c(6,7,9,10)])+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))+RotatedAxis()
+
+
+
+Idents(merging_clean) <- 'pathotype'
+dotplot<-DotPlot(merging_clean, features=feature[-c(1:3)])+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))+RotatedAxis()
+
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot)
+
+
+Idents(merging_clean) <- 'pathotype'
+dotplot<-DotPlot(merging_clean, features = c("TGFb_module1", "IFNg_module1", "IL1b_module1", "TNFa_module1","IL6_module1" ,"FLS_HUVEC_module1", "Tcell_module1"))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))+RotatedAxis()
+
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot)
+
+
+```
