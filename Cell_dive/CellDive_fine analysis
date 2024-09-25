@@ -1,0 +1,457 @@
+options(bitmapType='cairo')
+library(Seurat)
+library(dplyr)
+library(sctransform)
+library(ggplot2)
+library(pheatmap)
+library(RColorBrewer)
+library(harmony)
+library(gridExtra)
+library(tidyverse)
+
+
+#read in segmented matrices, normalise and merge all sample together
+setwd("/rds/projects/c/croftap-celldive01/CB-Cleaned/")
+
+# load in all of these
+
+load(file="/rds/projects/c/croftap-celldive01/CB-Cleaned/adult-panel2-objects")
+
+
+### set graph graphics, run all these commands for plot formatting if desired
+
+formplot <- list(RotatedAxis(), FontSize("8"), theme(axis.title.x=element_blank(), axis.title.y=element_blank()), scale_color_gradient2())
+thin <- list(theme(axis.title.x=element_blank(), axis.title.y=element_blank()))
+
+###################################################################### 
+###################################################################### 
+
+# remove OA samples
+Idents(all) <- "orig.ident"
+all <- subset(all, idents=c("146", "149"), invert=T)
+
+###################################################################### 
+###################################################################### 
+
+unique(all$take2)
+
+# Cell Dive markers, reorder as desired
+gen2 <- c("SMA","COL4A1","CD146","COL6A1","DKK3", "COL3A1","COMP","FABP4","COL1","POSTN","SPARC", "MMP3", "PDPN","LYVE1", 
+          "CD68",  "CD3", "MCT","CD20","CD15","CLU", "APOD")
+
+# Dotplot all cells
+DefaultAssay(all) <- "SCT"
+Idents(all) <- "take2"
+
+# without formatting
+DotPlot(all, features =gen2, cluster.idents = T) 
+# with formatting 
+DotPlot(all, features =gen2, cluster.idents = T) & formplot
+
+# Dotplot excluding Artefact & RBCs, add in any other groups you want to omit
+Idents(all) <- "take2"
+dotp <- subset(all, idents=c("Artefact|RBCs|SMA-high cells|Sparse cells|Muscle"), invert=T)
+DotPlot(dotp, features =gen2, cluster.idents = T) & formplot
+
+###################################################################### 
+###################################################################### 
+
+# order how you want
+iden <- unique(all$take2)
+iden2 <- c("B/T aggregates", "T cells")
+iden3 <- as.character(iden[grep("LL", iden)])
+iden4  <- c("SL macrophages", "LYVE1+ macrophages") 
+iden5  <- as.character(iden[grep("POSTN-hi", iden)]) 
+iden5c  <- as.character(iden[grep("SPARC", iden)]) 
+iden5d  <- as.character(iden[grep("COL6", iden)]) 
+iden5e  <- as.character(iden[grep("COL1", iden)]) 
+iden5f  <- as.character(iden[grep("CLU", iden)]) 
+iden6 <- as.character(iden[grep("vess|Lymph", iden)]) 
+iden7 <- as.character(iden[grep("Mast", iden)]) 
+iden8 <- as.character(iden[grep("Adi|Fibr|Muscl", iden)]) 
+iden9 <- as.character(iden[grep("SMA-hi|RBCs|Collagen|Sparse", iden)]) 
+
+#rearrange the iden objects here to reorder
+orderclust <- unique(c(iden2, iden3,iden4,iden6,iden5,iden5c,iden5d, iden5e, iden5f,iden7,iden8, iden9))
+
+Idents(dotp) <- "take2"
+levels(dotp) <- rev(orderclust)
+DotPlot(dotp, features =gen2, cluster.idents = T) & formplot
+
+###################################################################### 
+###################################################################### 
+
+library(data.table)
+library(splitstackshape)
+library(ggpubr)
+library(rstatix)
+library(DescTools)
+library(textshape)
+library(dplyr)
+library(tidyverse)
+library(ComplexHeatmap)
+
+# For the proximity analysis
+
+load(file="/rds/projects/c/croftap-celldive01/CB-Cleaned/matrix-3.RData")
+
+plt_df <- coloc_res_coarse %>%
+  subset(pval < 0.05) %>%
+  dplyr::select(index_type, type, zscore) %>%
+  spread(type, zscore, fill = 0) %>%
+  column_to_rownames('index_type') %>%
+  as.matrix
+
+#asymmetrical
+plt_df[c(3,5,6,15,19,20,23),c(3,5,6,15,19,20,23)] %>%
+  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, cluster_columns = T, cluster_rows = T)
+
+# make symmetrical
+plt_use <- plt_df[c(3,5,6,15,19,20,23),c(3,5,6,15,19,20,23)]
+plt_use <- plt_use + t(plt_use)
+plt_use %>%
+  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, 
+          cluster_columns = T, cluster_rows = T) 
+
+# all cell types
+rownames(plt_df)
+plt_df[-c(2,16,7,14,18),-c(2,16,7,14,18)] %>%
+  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, cluster_columns = T, cluster_rows = T)
+
+###################################################################### 
+###################################################################### 
+
+
+# Cell Dive visualisation
+# NB I rename the images in Cell Dive projects to speed up the process of identifying 
+# them between R and Cell Dive
+# 1- 28, 2- 115, 3- 127, 4- 146, 5- 31, 6- 149, 7- 195, 8- 202, 9- 20, 10- 26, 11-240
+
+
+i <- 1
+i <- 2
+i <- 3
+i <- 4
+i <- 5
+i <- 6
+i <- 7
+i <- 8
+i <- 9
+i <- 10
+i <- 11
+
+# name colours to provide consistency across all slides, irrespective of missing / additional clusters
+
+group.color <- c("SMA-hi vessels"="cyan2", "Small vessels"="blue", "Endothelial cells"="red","RBCs"="brown",
+                 "CLU-hi fibroblasts"="aquamarine3", "COL1-hi fibroblasts"="lemonchiffon",  "COL6-hi Fibroblasts"="snow3",
+                 "POSTN-hi fibroblasts"="salmon","COL6-hi fibroblasts"="steelblue","COMP-hi fibroblasts"= "darkseagreen1",
+                 "LL fibroblasts"= "magenta", "COL3-hi fibroblasts"="mediumpurple2", "POSTN+COMP+ fibroblasts"="lightpink",
+                 "SPARC-hi fibroblasts"="yellow4", "COL3-hi fibroblasts"="plum2",
+                 "LL macrophages"="turquoise4", "Macrophages"="olivedrab1", "LYVE1+ macrophages"="orchid4",
+                 "T cells" ="mediumorchid1", "SMA-hi cells"="lightskyblue","B/T aggregates"="yellow",
+                 "Adipose"="green2",  "Mast cells"="darkorange","Muscle"="grey31", 
+                 "Lymphatics"="palevioletred",
+                 "Artefact"="azure","Fibrin"="skyblue2")
+
+# view whole biopsy slide
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=group.color) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+###################################################################### 
+###################################################################### 
+
+# watch out there are no typos in the names of clusters in your group.color object
+# if there are, they will just not be shown, to check there are none missing use a 
+# generic color scheme and confirm the same number of clusters in the legend ie: 
+
+bright <- c( "plum1", "green", "yellow", "purple4", "darkorange",  "blue","aquamarine3","deeppink4","#826D9B","bisque3","red",
+             "lightpink", "forestgreen",  "steelblue3", "lightcyan",  "lemonchiffon", "cyan",
+             "gold2", "yellow4", "royalblue4" ,  "mediumpurple", "seashell","black",  "lightskyblue1","yellowgreen", "cyan3", "palevioletred",
+             "lavenderblush2" ,"darkgrey","mediumorchid3","salmon2","mediumspringgreen","khaki" ,"brown")
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+
+###################################################################### 
+###################################################################### 
+
+# view small fragment examples
+i <- 11
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+small <- test[test$Centroid.Y.µm < 3500  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 4600 & test$Centroid.X.µm < 6100,]
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+###################################################################### 
+###################################################################### 
+
+# view certain cell types in whole slide, grep bits of the cluster name you want
+iden <- unique(all$take2)
+iden1 <- iden[grep("vess|SMA|RBC|LL", iden)]
+small <- test[test$named1 %in% iden1,]
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=group.color) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+
+###################################################################### 
+###################################################################### 
+
+
+# view certain cell types in a little fragment
+iden <- unique(all$take2)
+iden1 <- iden[grep("Endo|SMA|ves|RBC|LL", iden)]
+small <- test[test$Centroid.Y.µm < 3500  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 3600 & test$Centroid.X.µm < 6100,]
+small <- small[small$named1 %in% iden1,]
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+
+###################################################################### 
+###################################################################### 
+
+
+# exclude certain fragments from view
+iden <- unique(all$take2)
+iden1 <- iden[grep("Artefact", iden, invert=T)]
+small <- test[test$Centroid.Y.µm < 3500  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 3600 & test$Centroid.X.µm < 6100,]
+small <- small[small$named1 %in% iden1,]
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+
+###################################################################### 
+###################################################################### 
+
+# make formatting nice
+
+setv <- list(theme(panel.background = element_rect(fill = 'black'), 
+                   panel.grid.major = element_blank(),
+                   panel.grid.minor = element_blank(),
+                   axis.title.x = element_blank(),
+                   axis.title.y = element_blank(),
+                   axis.text = element_blank(),
+                   legend.background = element_rect(fill = "black", color = NA),
+                   legend.key = element_rect(color = "gray", fill = "black"),
+                   legend.text = element_text(color = "white"))) 
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=group.color) &  
+  guides(colour = guide_legend(override.aes = list(size=5))) & setv
+
+###################################################################### 
+###################################################################### 
+
+#see how clusters are split between patients
+
+Idents(all) <- "take2"
+
+ptnum2 <- as.data.frame(table(all@active.ident, all$orig.ident))
+ggplot(ptnum2) + aes(x = Var1, y = Freq, fill=Var2) + geom_bar(position="fill", stat="identity") + labs(x="", y = "") + 
+  theme(legend.title=element_blank()) + scale_fill_manual(values=bright) + RotatedAxis()
+
+
+###################################################################### 
+###################################################################### 
+
+# view all the slides
+names <- names(data_x_y)
+xy_list <- list()
+for (i in 1:length(data_x_y)) {
+  xy_list[[i]] <- data_x_y[[names[[i]]]]
+}
+
+all_meta <- all@meta.data
+s_obj_meta <- list()
+ggplot_ls <- list()
+
+# this code takes all the eliminated coordinates (contained in the object missing.coord and visualises them too)
+for (i in 1:length(pt)) {
+  s_obj_meta[[i]] <- all_meta[all_meta$orig.ident == names[[i]],];
+  xy_list[[i]]$named1 <- s_obj_meta[[i]]$take2;
+  test <- rbind(missing.coord[[i]], xy_list[[i]])
+  ggplot_ls[[i]] <- ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+    geom_point(size=0.4)+theme_classic()+scale_color_manual(values = group.color) &  scale_y_reverse() &
+    guides(colour = guide_legend(override.aes = list(size=5)));
+  print(ggplot_ls[[i]])
+}
+
+all_meta <- all@meta.data
+s_obj_meta <- list()
+ggplot_ls <- list()
+
+for (i in 1:length(names)) {
+  s_obj_meta[[i]] <- all_meta[all_meta$orig.ident == names[[i]],];
+  xy_list[[i]]$named1 <- s_obj_meta[[i]]$take2;
+  test <- rbind(missing.coord[[i]], xy_list[[i]])
+  ggplot_ls[[i]] <- ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+    geom_point(size=0.2)+theme_classic()+scale_color_manual(values = bright) &
+    NoLegend() & thin
+}
+
+library(grid)
+library(gridExtra)
+
+grid.arrange(grobs = ggplot_ls, ncol=3)
+
+###################################################################### 
+###################################################################### 
+
+#run on cluster
+load(file="matrix-3.RData")
+
+plt_df <- coloc_res_coarse %>%
+  subset(pval < 0.05) %>%
+  dplyr::select(index_type, type, zscore) %>%
+  spread(type, zscore, fill = 0) %>%
+  column_to_rownames('index_type') %>%
+  as.matrix
+
+plt_df[-c(2,17,19),-c(2,17,19)] %>%
+  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, cluster_columns = T, cluster_rows = T)
+
+plt_df_use <- plt_df[-c(2,17,19),-c(2,17,19)]
+plt_df_use2 <- plt_df_use+t(plt_df_use)
+plt_df_use2 %>%
+  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, cluster_columns = T, cluster_rows = T)
+
+###################################################################### 
+###################################################################### 
+
+group.color <- c("SMA-hi vessels"="red", "SMA-low vessels"="cyan","COL1-hi fibroblasts"="blue",  "COL6-hi fibroblasts"="orange",
+                 "LL fibroblasts"= "magenta", "LL macrophages"="magenta", 
+                 "T cells" ="green3", "B/T aggregates"="yellow", "POSTN-hi fibroblasts"="snow3")
+
+# 1- 28, 2- 115, 3- 127, 4- 146, 5- 31, 6- 149, 7- 195, 8- 202, 9- 20, 10- 26, 11-240
+
+bright <- c( "plum1", "green", "yellow", "purple4", "darkorange",  "cyan","aquamarine3","deeppink4","#826D9B","bisque3","red",
+             "lightpink", "forestgreen",  "steelblue3", "lightcyan",  "lemonchiffon", "blue",
+             "gold2", "yellow4", "royalblue4" ,  "mediumpurple", "seashell","black",  "lightskyblue1","yellowgreen", "cyan3", "palevioletred",
+             "lavenderblush2" ,"darkgrey","mediumorchid3","salmon2","mediumspringgreen","khaki" ,"brown")
+
+i <- 1
+i <- 2
+i <- 3
+i <- 4
+i <- 5
+i <- 6
+i <- 7
+i <- 8
+i <- 9
+i <- 10
+i <- 11
+
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+#test$named1 <- M915$SCT_snn_res.0.16
+test$named1 <- M915$take2
+iden <- unique(all$take2)
+
+#iden1 <- iden[grep("DKK|LL", iden)]
+#iden1 <- iden[grep("vess|LL", iden)]
+#iden1 <- c("a", "b", "c", "d", "5", "6", "e", "f", "g", "h")
+#iden1 <- iden[grep("LYVE|COL3|LL|Mac", iden)]
+iden1 <- iden[grep("LL ma|COL1|COL6|T cells|B/T|vess|POSTN", iden)]
+
+small <- test[test$named1 %in% iden1,]
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5))) 
+
+# highlight in a small section
+
+small <- small[small$named1 %in% iden1,]
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=group.color) & 
+  guides(colour = guide_legend(override.aes = list(size=5))) & setv
+
+###################################################################### 
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+#2 
+small <- test[test$Centroid.Y.µm < 3500  & test$Centroid.Y.µm > 1800 &  test$Centroid.X.µm > 5000,]
+small <- test[test$Centroid.Y.µm < 4000  & test$Centroid.Y.µm > 3000  & test$Centroid.X.µm > 4000 &  test$Centroid.X.µm < 5000,]
+small <- test[test$Centroid.Y.µm > 4000  & test$Centroid.Y.µm < 5000 & test$Centroid.X.µm < 3000,]
+
+#3
+small <- test[test$Centroid.Y.µm < 7500  & test$Centroid.Y.µm > 5000 &  test$Centroid.X.µm < 6100,]
+small <- test[test$Centroid.Y.µm > 6500 &  test$Centroid.X.µm > 4500,]
+small <- test[test$Centroid.Y.µm > 5000 & test$Centroid.Y.µm < 7500 & test$Centroid.X.µm < 2500,]
+small <- test[test$Centroid.Y.µm > 8000 &  test$Centroid.X.µm > 4500 & test$Centroid.X.µm < 6000,]
+small <- test[test$Centroid.Y.µm > 7500 &  test$Centroid.X.µm > 2000 & test$Centroid.X.µm < 4000,]
+
+#4
+small <- test[test$Centroid.Y.µm < 7500  & test$Centroid.Y.µm > 2500 &  test$Centroid.X.µm > 5000,]
+small <- test[test$Centroid.Y.µm > 2500  & test$Centroid.Y.µm < 6500 &  test$Centroid.X.µm > 5000,]
+small <- test[test$Centroid.Y.µm < 5000  & test$Centroid.X.µm < 2200,]
+
+#5
+small <- test[test$Centroid.Y.µm < 3500  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 3000,]
+small <- test[test$Centroid.Y.µm < 3000  & test$Centroid.Y.µm > 1000 &  test$Centroid.X.µm > 1000 &  test$Centroid.X.µm < 2700,]
+small <- test[test$Centroid.X.µm < 3500 &  test$Centroid.Y.µm > 2000,]
+small <- test[test$Centroid.X.µm > 3500 &  test$Centroid.Y.µm > 2000 &  test$Centroid.Y.µm < 3200,]
+
+#6
+small <- test[test$Centroid.Y.µm > 7000,]
+
+#7
+small <- test[test$Centroid.Y.µm > 7400  & test$Centroid.X.µm > 6000,]
+small <- test[test$Centroid.Y.µm > 3000  & test$Centroid.Y.µm < 6000  & test$Centroid.X.µm > 5200,]
+small <- test[test$Centroid.Y.µm < 5700  & test$Centroid.X.µm < 5300,]
+small <- test[test$Centroid.Y.µm > 3600  & test$Centroid.Y.µm < 4400 & test$Centroid.X.µm > 800  & test$Centroid.X.µm < 2400,]
+small <- test[test$Centroid.Y.µm > 3700  & test$Centroid.Y.µm < 6000 & test$Centroid.X.µm > 5500,]
+small <- test[test$Centroid.Y.µm < 2900  & test$Centroid.Y.µm > 1750,]
+
+#8
+small <- test[test$Centroid.Y.µm < 3500  & test$Centroid.Y.µm > 1900  & test$Centroid.X.µm > 3500 & test$Centroid.X.µm < 5800,]
+small <- test[test$Centroid.Y.µm < 4000  & test$Centroid.Y.µm > 2000  &  test$Centroid.X.µm < 2000,]
+small <- test[test$Centroid.Y.µm < 2000  & test$Centroid.X.µm > 4000  &  test$Centroid.X.µm < 5200,]
+
+#9 
+small <- test[test$Centroid.Y.µm < 3800  & test$Centroid.Y.µm > 2200  & test$Centroid.X.µm > 800  &  test$Centroid.X.µm < 2800,]
+
+small <- test[test$Centroid.Y.µm > 2000 & test$Centroid.Y.µm < 4000 & test$Centroid.X.µm > 2000,]
+
+#11
+small <- test[test$Centroid.Y.µm < 3500  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 3600 & test$Centroid.X.µm < 6100,]
+small <- test[test$Centroid.Y.µm < 3800  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 3600,]
+small <- test[test$Centroid.Y.µm < 2800  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 4800 & test$Centroid.X.µm < 6100,]
+small <- test[test$Centroid.Y.µm > 3500 &  test$Centroid.X.µm > 4000 & test$Centroid.X.µm < 7000,]
+small <- test[test$Centroid.Y.µm > 3000 &  test$Centroid.X.µm > 1000 & test$Centroid.X.µm < 3600,]
+small <- test[test$Centroid.Y.µm < 4000 &  test$Centroid.X.µm > 6000,]
+
+small <- test[test$Centroid.Y.µm < 3500 &  test$Centroid.Y.µm > 2500 & test$Centroid.X.µm > 4700 & test$Centroid.X.µm < 6000,]
+small <- test[test$Centroid.Y.µm < 1800 & test$Centroid.Y.µm > 700 &  test$Centroid.X.µm < 3400 &  test$Centroid.X.µm > 2800,]
+small <- test[test$Centroid.Y.µm > 4800 &  test$Centroid.X.µm > 4750,]
+
