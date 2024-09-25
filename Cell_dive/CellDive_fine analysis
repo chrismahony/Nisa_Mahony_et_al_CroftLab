@@ -10,347 +10,298 @@ library(gridExtra)
 library(tidyverse)
 
 
+#############################
 #read in segmented matrices, normalise and merge all sample together
-setwd("/rds/projects/c/croftap-celldive01/CB-Cleaned/")
+setwd("/rds/projects/c/croftap-mapjagdata/CellDive/Panel-2-adult")
 
 # load in all of these
+#load(file="2407-all-merged.RData")
+load(file="2407-panel2-object-2")
+load(file="2407_filtered_coordinates-2.RData")
+load(file="2407-Patients.RData")
+load(file="2407_Artefact_coordinates.RData")
 
-load(file="/rds/projects/c/croftap-celldive01/CB-Cleaned/adult-panel2-objects")
+#############################
 
-
-### set graph graphics, run all these commands for plot formatting if desired
-
+### set graph graphics
 formplot <- list(RotatedAxis(), FontSize("8"), theme(axis.title.x=element_blank(), axis.title.y=element_blank()), scale_color_gradient2())
 thin <- list(theme(axis.title.x=element_blank(), axis.title.y=element_blank()))
+bright <- c("purple4", "honeydew3","deeppink4","#826D9B","bisque3",
+            "lightpink", "forestgreen",  "darkorange","aquamarine3" , "steelblue3", "lightcyan",  "lemonchiffon",
+            "gold2", "yellow4", "yellow", "cyan", "royalblue4" ,"brown",  "mediumpurple", "green",
+            "red", "blue", "seashell",  "lightskyblue1","black","yellowgreen", "plum1", "cyan3", "palevioletred",
+            "lavenderblush2" ,"darkgrey","mediumorchid3","salmon2", "brown" ,"mediumspringgreen")
 
-###################################################################### 
-###################################################################### 
 
-# remove OA samples
-Idents(all) <- "orig.ident"
-all <- subset(all, idents=c("146", "149"), invert=T)
-
-###################################################################### 
-###################################################################### 
-
-unique(all$take2)
-
-# Cell Dive markers, reorder as desired
 gen2 <- c("SMA","COL4A1","CD146","COL6A1","DKK3", "COL3A1","COMP","FABP4","COL1","POSTN","SPARC", "MMP3", "PDPN","LYVE1", 
-          "CD68",  "CD3", "MCT","CD20","CD15","CLU", "APOD")
-
-# Dotplot all cells
-DefaultAssay(all) <- "SCT"
-Idents(all) <- "take2"
-
-# without formatting
-DotPlot(all, features =gen2, cluster.idents = T) 
-# with formatting 
-DotPlot(all, features =gen2, cluster.idents = T) & formplot
-
-# Dotplot excluding Artefact & RBCs, add in any other groups you want to omit
-Idents(all) <- "take2"
-dotp <- subset(all, idents=c("Artefact|RBCs|SMA-high cells|Sparse cells|Muscle"), invert=T)
-DotPlot(dotp, features =gen2, cluster.idents = T) & formplot
-
-###################################################################### 
-###################################################################### 
-
-# order how you want
-iden <- unique(all$take2)
-iden2 <- c("B/T aggregates", "T cells")
-iden3 <- as.character(iden[grep("LL", iden)])
-iden4  <- c("SL macrophages", "LYVE1+ macrophages") 
-iden5  <- as.character(iden[grep("POSTN-hi", iden)]) 
-iden5c  <- as.character(iden[grep("SPARC", iden)]) 
-iden5d  <- as.character(iden[grep("COL6", iden)]) 
-iden5e  <- as.character(iden[grep("COL1", iden)]) 
-iden5f  <- as.character(iden[grep("CLU", iden)]) 
-iden6 <- as.character(iden[grep("vess|Lymph", iden)]) 
-iden7 <- as.character(iden[grep("Mast", iden)]) 
-iden8 <- as.character(iden[grep("Adi|Fibr|Muscl", iden)]) 
-iden9 <- as.character(iden[grep("SMA-hi|RBCs|Collagen|Sparse", iden)]) 
-
-#rearrange the iden objects here to reorder
-orderclust <- unique(c(iden2, iden3,iden4,iden6,iden5,iden5c,iden5d, iden5e, iden5f,iden7,iden8, iden9))
-
-Idents(dotp) <- "take2"
-levels(dotp) <- rev(orderclust)
-DotPlot(dotp, features =gen2, cluster.idents = T) & formplot
-
-###################################################################### 
-###################################################################### 
-
-library(data.table)
-library(splitstackshape)
-library(ggpubr)
-library(rstatix)
-library(DescTools)
-library(textshape)
-library(dplyr)
-library(tidyverse)
-library(ComplexHeatmap)
-
-# For the proximity analysis
-
-load(file="/rds/projects/c/croftap-celldive01/CB-Cleaned/matrix-3.RData")
-
-plt_df <- coloc_res_coarse %>%
-  subset(pval < 0.05) %>%
-  dplyr::select(index_type, type, zscore) %>%
-  spread(type, zscore, fill = 0) %>%
-  column_to_rownames('index_type') %>%
-  as.matrix
-
-#asymmetrical
-plt_df[c(3,5,6,15,19,20,23),c(3,5,6,15,19,20,23)] %>%
-  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, cluster_columns = T, cluster_rows = T)
-
-# make symmetrical
-plt_use <- plt_df[c(3,5,6,15,19,20,23),c(3,5,6,15,19,20,23)]
-plt_use <- plt_use + t(plt_use)
-plt_use %>%
-  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, 
-          cluster_columns = T, cluster_rows = T) 
-
-# all cell types
-rownames(plt_df)
-plt_df[-c(2,16,7,14,18),-c(2,16,7,14,18)] %>%
-  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, cluster_columns = T, cluster_rows = T)
-
-###################################################################### 
-###################################################################### 
+          "CD68",  "CD3", "MCT","CD20","CD15","CLU", "APOD", "DAPI-INIT", "DAPI-FINAL")
 
 
-# Cell Dive visualisation
-# NB I rename the images in Cell Dive projects to speed up the process of identifying 
-# them between R and Cell Dive
-# 1- 28, 2- 115, 3- 127, 4- 146, 5- 31, 6- 149, 7- 195, 8- 202, 9- 20, 10- 26, 11-240
+#############################
+
+save(all, file="2407-all-merged.RData")
+
+#############################
+
+results <- dir("segmentation-files/", pattern = "*txt", 
+               full.names = TRUE)
+
+pt <- gsub("segmentation-files//", "", results)
+sample <- substr(pt, 6,12)
+pt <- substr(pt, 6,8)
+
+data = list()
+for (i in 1:length(results)) {
+  data[[i]] <- read.delim(results[[i]])
+}
 
 
+# format spatial, centroid x and y are your coordinates of each point
+data_x_y = list()
+for (i in 1:length(results)) {
+  data_x_y[[i]] <- read.delim(results[[i]])
+  rownames(data_x_y[[i]]) <- seq_along(data_x_y[[i]][,1])
+  data_x_y[[i]] <- data_x_y[[i]] %>% select(c('Centroid.X.µm', 'Centroid.Y.µm'))
+}
+
+#assign names
+names(data_x_y) <- pt
+names(data) <- pt
+
+#save your files
+save(data, file="2407_all-textfiles.RData")
+save(data_x_y, file="2407_all-coordinates.RData")
+save(pt, file="2407-Patients.RData")
+
+#take a look at one of your data samples
+test <- data[[1]]
+test <- head(test)
+
+#include genes here that look proper dodgy that you won't want to include in the clustering
+genesRemove <- c("CD31", "CD138")
+
+#take only mean expression values for cell (remove nuclear staining)
+#get rid of the parts of the names that are extra wordy and not needed (gsub)
+for (i in 1:length(data)) {
+  data[[i]]$coord <- paste0(data[[i]]$Centroid.X.µm,data[[i]]$Centroid.Y.µm)
+  Cell.coord <- as.data.frame(data[[i]][["coord"]])
+  data[[i]] <- data[[i]] %>% select(contains('.mean'))
+  data[[i]] <- data[[i]] %>% select(contains('cell'))
+  colnames(data[[i]]) <- gsub("Cell..", "", colnames(data[[i]]))
+  colnames(data[[i]]) <- gsub(".mean", "", colnames(data[[i]]))
+  rownames(data[[i]])<-seq_along(data[[i]][,1])
+  data[[i]]<-as.data.frame(t(data[[i]]))
+  data[[i]]<- filter(data[[i]], !(rownames(data[[i]]) %in% genesRemove))
+  data[[i]]<-CreateSeuratObject(data[[i]])
+  data[[i]]<- subset(data[[i]], subset=nCount_RNA>0)
+  data[[i]]<-SCTransform(data[[i]])
+  data[[i]] <- AddMetaData(data[[i]], metadata=Cell.coord, col.name="coordinates")
+}
+
+head(data[[i]])
+
+#rename
+for (i in 1:length(results)) {
+  data[[i]]$orig.ident<- names(data[i]) 
+}
+
+save(data, file="2407-data-files-non-merged-2.RData")
+
+
+
+
+#subset out the points that remain in the same place (continuing to have a DAPI stain at the start and end)
+#take a look at how it would look
 i <- 1
+
+test <- data_x_y[[i]]
+test$coord <- paste0(test$Centroid.X.µm,test$Centroid.Y.µm)
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm)) + geom_point(size=0.2) + scale_x_reverse()
+
+test <- data_x_y[[i]]
+test$coord <- paste0(test$Centroid.X.µm,test$Centroid.Y.µm)
+test <- test[!(test$coord %in% check$coordinates), ]
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm)) + geom_point(size=0.2) + scale_x_reverse()
+
+test <- data_x_y[[i]]
+test$coord <- paste0(test$Centroid.X.µm,test$Centroid.Y.µm)
+test <- test[test$coord %in% check$coordinates, ]
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm)) + geom_point(size=0.2) + scale_x_reverse()
+
+
+#take a look at the violen plot and adjust DAPI coordinates a
+ordingly
+i <- 1
+VlnPlot(data[[i]], features=c("DAPI-INIT", "DAPI-FINAL"), pt.size=0) 
+check <- subset(data[[i]], subset= `DAPI-FINAL`> 3.5 & `DAPI-FINAL` < 8.5 & `DAPI-INIT` > 5.8 & `DAPI-INIT` < 8.3)
+data[[i]]<- subset(data[[i]], subset= `DAPI-FINAL`> 3.5 & `DAPI-FINAL` < 8.5 & `DAPI-INIT` > 5.8 & `DAPI-INIT` < 8.3)
+data[[i]]<-SCTransform(data[[i]])
+
 i <- 2
+VlnPlot(data[[i]], features=c("DAPI-INIT", "DAPI-FINAL"), pt.size=0) 
+data[[i]]<- subset(data[[i]], subset= `DAPI-FINAL`> 6 & `DAPI-INIT` > 6.4 & `DAPI-INIT` < 9.5)
+data[[i]]<-SCTransform(data[[i]])
+
 i <- 3
+VlnPlot(data[[i]], features=c("DAPI-INIT", "DAPI-FINAL"), pt.size=0) 
+check <- subset(data[[i]], subset= `DAPI-FINAL`> 6.3 & `DAPI-INIT` < 10)
+data[[i]]<- subset(data[[i]], subset= `DAPI-FINAL`> 6.3 & `DAPI-INIT` < 10)
+data[[i]]<-SCTransform(data[[i]])
+
 i <- 4
+VlnPlot(data[[i]], features=c("DAPI-INIT", "DAPI-FINAL"), pt.size=0) 
+check <- subset(data[[i]], subset= `DAPI-FINAL` < 10.3  & `DAPI-FINAL` > 6  & `DAPI-INIT` > 6 & `DAPI-INIT` < 10.3)
+data[[i]]<- subset(data[[i]], subset= `DAPI-FINAL` < 10.3  & `DAPI-FINAL` > 6  & `DAPI-INIT` > 6 & `DAPI-INIT` < 10.3)
+data[[i]]<-SCTransform(data[[i]])
+
 i <- 5
+VlnPlot(data[[i]], features=c("DAPI-INIT", "DAPI-FINAL"), pt.size=0) 
+check <- subset(data[[i]], subset= `DAPI-FINAL` < 10  & `DAPI-FINAL` > 6.5  & `DAPI-INIT` > 6 & `DAPI-INIT` < 10)
+data[[i]]<- subset(data[[i]], subset= `DAPI-FINAL` < 10  & `DAPI-FINAL` > 6.5  & `DAPI-INIT` > 6 & `DAPI-INIT` < 10)
+data[[i]]<-SCTransform(data[[i]])
+
 i <- 6
+VlnPlot(data[[i]], features=c("DAPI-INIT", "DAPI-FINAL"), pt.size=0) 
+check <- subset(data[[i]], subset= `DAPI-INIT` > 5.5 & `DAPI-INIT` < 10.3  & `DAPI-FINAL` > 5.5)
+data[[i]]<- subset(data[[i]], subset= `DAPI-INIT` > 5.5 & `DAPI-INIT` < 10.3  & `DAPI-FINAL` > 5.5)
+data[[i]]<-SCTransform(data[[i]])
+
 i <- 7
+VlnPlot(data[[i]], features=c("DAPI-INIT", "DAPI-FINAL"), pt.size=0) 
+check <- subset(data[[i]], subset= `DAPI-INIT` > 6 & `DAPI-INIT` < 10  & `DAPI-FINAL` > 6)
+data[[i]]<- subset(data[[i]], subset= `DAPI-INIT` > 6 & `DAPI-INIT` < 10  & `DAPI-FINAL` > 6)
+data[[i]]<-SCTransform(data[[i]])
+
 i <- 8
+VlnPlot(data[[i]], features=c("DAPI-INIT", "DAPI-FINAL"), pt.size=0) 
+check <- subset(data[[i]], subset= `DAPI-FINAL` > 6  & `DAPI-INIT` > 6.5 & `DAPI-INIT` < 10.2)
+data[[i]]<- subset(data[[i]], subset= `DAPI-FINAL` > 6  & `DAPI-INIT` > 6.5 & `DAPI-INIT` < 10.2)
+data[[i]]<-SCTransform(data[[i]])
+
 i <- 9
+VlnPlot(data[[i]], features=c("DAPI-INIT", "DAPI-FINAL"), pt.size=0)
+check <- subset(data[[i]], subset= `DAPI-FINAL`> 5 & `DAPI-INIT` > 5.8 & `DAPI-INIT` < 9.8)
+data[[i]] <- subset(data[[i]], subset= `DAPI-FINAL`> 5 & `DAPI-INIT` > 5.8 & `DAPI-INIT` < 9.8)
+data[[i]]<-SCTransform(data[[i]])
+
 i <- 10
+VlnPlot(data[[i]], features=c("DAPI-INIT", "DAPI-FINAL"), pt.size=0) 
+check <- subset(data[[i]], subset= `DAPI-FINAL`> 5 & `DAPI-INIT` > 5.5 & `DAPI-INIT` < 9)
+data[[i]] <- subset(data[[i]], subset= `DAPI-FINAL`> 5 & `DAPI-INIT` > 5.5 & `DAPI-INIT` < 9)
+data[[i]]<-SCTransform(data[[i]])
+
 i <- 11
-
-# name colours to provide consistency across all slides, irrespective of missing / additional clusters
-
-group.color <- c("SMA-hi vessels"="cyan2", "Small vessels"="blue", "Endothelial cells"="red","RBCs"="brown",
-                 "CLU-hi fibroblasts"="aquamarine3", "COL1-hi fibroblasts"="lemonchiffon",  "COL6-hi Fibroblasts"="snow3",
-                 "POSTN-hi fibroblasts"="salmon","COL6-hi fibroblasts"="steelblue","COMP-hi fibroblasts"= "darkseagreen1",
-                 "LL fibroblasts"= "magenta", "COL3-hi fibroblasts"="mediumpurple2", "POSTN+COMP+ fibroblasts"="lightpink",
-                 "SPARC-hi fibroblasts"="yellow4", "COL3-hi fibroblasts"="plum2",
-                 "LL macrophages"="turquoise4", "Macrophages"="olivedrab1", "LYVE1+ macrophages"="orchid4",
-                 "T cells" ="mediumorchid1", "SMA-hi cells"="lightskyblue","B/T aggregates"="yellow",
-                 "Adipose"="green2",  "Mast cells"="darkorange","Muscle"="grey31", 
-                 "Lymphatics"="palevioletred",
-                 "Artefact"="azure","Fibrin"="skyblue2")
-
-# view whole biopsy slide
-nom <- pt[[i]]
-Idents(all) <- "orig.ident"
-M915 <- subset(all, idents=nom)
-M915_meta <- M915@meta.data
-test <- data_x_y[[nom]]
-test$named1 <- M915$take2
-
-ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
-  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=group.color) &  
-  guides(colour = guide_legend(override.aes = list(size=5)))
-
-###################################################################### 
-###################################################################### 
-
-# watch out there are no typos in the names of clusters in your group.color object
-# if there are, they will just not be shown, to check there are none missing use a 
-# generic color scheme and confirm the same number of clusters in the legend ie: 
-
-bright <- c( "plum1", "green", "yellow", "purple4", "darkorange",  "blue","aquamarine3","deeppink4","#826D9B","bisque3","red",
-             "lightpink", "forestgreen",  "steelblue3", "lightcyan",  "lemonchiffon", "cyan",
-             "gold2", "yellow4", "royalblue4" ,  "mediumpurple", "seashell","black",  "lightskyblue1","yellowgreen", "cyan3", "palevioletred",
-             "lavenderblush2" ,"darkgrey","mediumorchid3","salmon2","mediumspringgreen","khaki" ,"brown")
-
-ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
-  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
-  guides(colour = guide_legend(override.aes = list(size=5)))
+VlnPlot(data[[i]], features=c("DAPI-INIT", "DAPI-FINAL"), pt.size=0)
+data[[i]] <- subset(data[[i]], subset= `DAPI-FINAL`> 5.8 & `DAPI-FINAL` < 10)
+data[[i]]<-SCTransform(data[[i]])
 
 
-###################################################################### 
-###################################################################### 
+#visualise the DAPI at start and end per sample
+library(cowplot)
 
-# view small fragment examples
-i <- 11
-nom <- pt[[i]]
-Idents(all) <- "orig.ident"
-M915 <- subset(all, idents=nom)
-M915_meta <- M915@meta.data
-test <- data_x_y[[nom]]
-test$named1 <- M915$take2
+qcplot <- list()
+for (i in 1:length(pt)) {
+  qcplot[[i]] <- VlnPlot(data[[i]], features=c("DAPI-INIT", "DAPI-FINAL"), pt.size=0) & NoLegend()
+}
+plot_grid(plotlist = qcplot)
 
-small <- test[test$Centroid.Y.µm < 3500  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 4600 & test$Centroid.X.µm < 6100,]
+save(data, file="2407_all_data_SCT_QC.RData")
 
-ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
-  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
-  guides(colour = guide_legend(override.aes = list(size=5)))
+###########################################
 
-###################################################################### 
-###################################################################### 
+for (i in 1:length(pt)) {
+  data_x_y[[i]]$coord <- paste0(data_x_y[[i]]$Centroid.X.µm, data_x_y[[i]]$Centroid.Y.µm)
+  data_x_y[[i]] <- filter(data_x_y[[i]], data_x_y[[i]]$coord %in% data[[i]]$coordinates)  
+}
 
-# view certain cell types in whole slide, grep bits of the cluster name you want
-iden <- unique(all$take2)
-iden1 <- iden[grep("vess|SMA|RBC|LL", iden)]
-small <- test[test$named1 %in% iden1,]
+save(data_x_y, file="2407_filtered_coordinates-2.RData")
 
-ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
-  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=group.color) & 
-  guides(colour = guide_legend(override.aes = list(size=5)))
+#merge data
+all <- merge(x = data[[1]], y = data[-1], merge.data=TRUE)
+VariableFeatures(all) <- check
+all <- RunPCA(all, assay = 'SCT')
 
+pct <- all[["pca"]]@stdev / sum(all[["pca"]]@stdev) * 100
+npc <- sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.1), decreasing = T)[1] + 1 %>% return()
+sort(which((pct[1:length(pct) - 1] - pct[2:length(pct)]) > 0.05), decreasing = T)[1] + 1 %>% return()
 
-###################################################################### 
-###################################################################### 
+#no integration
+library(harmony)
+all <- RunHarmony(all, group.by.vars = "orig.ident", assay.use="SCT", reduction="pca")
+all <- RunUMAP(all, reduction="harmony", dims=1:npc)
+all<-FindNeighbors(all, dims = 1:npc, reduction= "harmony", assay="SCT")
+all<-FindClusters(all, resolution = c(0.2), graph.name="SCT_snn")
 
+save(all, file="2407-all-merged.RData")
 
-# view certain cell types in a little fragment
-iden <- unique(all$take2)
-iden1 <- iden[grep("Endo|SMA|ves|RBC|LL", iden)]
-small <- test[test$Centroid.Y.µm < 3500  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 3600 & test$Centroid.X.µm < 6100,]
-small <- small[small$named1 %in% iden1,]
-
-ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
-  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
-  guides(colour = guide_legend(override.aes = list(size=5)))
-
-
-###################################################################### 
-###################################################################### 
-
-
-# exclude certain fragments from view
-iden <- unique(all$take2)
-iden1 <- iden[grep("Artefact", iden, invert=T)]
-small <- test[test$Centroid.Y.µm < 3500  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 3600 & test$Centroid.X.µm < 6100,]
-small <- small[small$named1 %in% iden1,]
-
-ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
-  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
-  guides(colour = guide_legend(override.aes = list(size=5)))
-
-
-###################################################################### 
-###################################################################### 
-
-# make formatting nice
-
-setv <- list(theme(panel.background = element_rect(fill = 'black'), 
-                   panel.grid.major = element_blank(),
-                   panel.grid.minor = element_blank(),
-                   axis.title.x = element_blank(),
-                   axis.title.y = element_blank(),
-                   axis.text = element_blank(),
-                   legend.background = element_rect(fill = "black", color = NA),
-                   legend.key = element_rect(color = "gray", fill = "black"),
-                   legend.text = element_text(color = "white"))) 
-
-ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
-  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=group.color) &  
-  guides(colour = guide_legend(override.aes = list(size=5))) & setv
-
-###################################################################### 
-###################################################################### 
-
-#see how clusters are split between patients
-
+#see how clusters plit between patients
 Idents(all) <- "take2"
-
 ptnum2 <- as.data.frame(table(all@active.ident, all$orig.ident))
 ggplot(ptnum2) + aes(x = Var1, y = Freq, fill=Var2) + geom_bar(position="fill", stat="identity") + labs(x="", y = "") + 
   theme(legend.title=element_blank()) + scale_fill_manual(values=bright) + RotatedAxis()
 
+ggplot(ptnum2) + aes(x = Var1, y = Freq, fill=Var2) + geom_bar(position="stack", stat="identity") + labs(x="", y = "") + 
+  theme(legend.title=element_blank()) + scale_fill_manual(values=bright) + RotatedAxis()
+
+ggplot(ptnum2) + aes(x = Var2, y = Freq, fill=Var1) + geom_bar(position="stack", stat="identity") + labs(x="", y = "") + 
+  theme(legend.title=element_blank()) + scale_fill_manual(values=bright) + RotatedAxis()
+
+ggplot(ptnum2) + aes(x = Var2, y = Freq, fill=Var1) + geom_bar(position="fill", stat="identity") + labs(x="", y = "") + 
+  theme(legend.title=element_blank()) + scale_fill_manual(values=bright) + RotatedAxis()
+
+Idents(all) <- "orig.ident"
+all <- RenameIdents(all, "028"="Res_1", "115"="eRA_1", "127"="Est_1", "146"="OA_1", "031"="eRA_2", "149"="OA_2", 
+                    "195"="Est_2", "202"="Res_2", "020"="eRA_3","026"="Res_3", "240"="Est_3")
+all$disease <- all@active.ident
+
+ptnum2 <- as.data.frame(table(all$take2, all$disease))
+ptnum2$Var2 <- factor(ptnum2$Var2, levels=c("OA_1", "OA_2", "eRA_1", "eRA_2", "eRA_3", "Est_1", "Est_2", "Est_3", "Res_1", "Res_2", "Res_3"))
+ptnum2 <- ptnum2[!(ptnum2$Var1 %in% c("RBCs", "Artefact", "Muscle", "Fibrin")),]
+ggplot(ptnum2) + aes(x = Var2, y = Freq, fill=Var1) + geom_bar(position="fill", stat="identity") + labs(x="", y = "") + 
+  theme(legend.title=element_blank()) + scale_fill_manual(values=bright) + RotatedAxis()
 
 ###################################################################### 
-###################################################################### 
 
-# view all the slides
-names <- names(data_x_y)
-xy_list <- list()
-for (i in 1:length(data_x_y)) {
-  xy_list[[i]] <- data_x_y[[names[[i]]]]
-}
-
-all_meta <- all@meta.data
-s_obj_meta <- list()
-ggplot_ls <- list()
-
-# this code takes all the eliminated coordinates (contained in the object missing.coord and visualises them too)
-for (i in 1:length(pt)) {
-  s_obj_meta[[i]] <- all_meta[all_meta$orig.ident == names[[i]],];
-  xy_list[[i]]$named1 <- s_obj_meta[[i]]$take2;
-  test <- rbind(missing.coord[[i]], xy_list[[i]])
-  ggplot_ls[[i]] <- ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
-    geom_point(size=0.4)+theme_classic()+scale_color_manual(values = group.color) &  scale_y_reverse() &
-    guides(colour = guide_legend(override.aes = list(size=5)));
-  print(ggplot_ls[[i]])
-}
-
-all_meta <- all@meta.data
-s_obj_meta <- list()
-ggplot_ls <- list()
-
-for (i in 1:length(names)) {
-  s_obj_meta[[i]] <- all_meta[all_meta$orig.ident == names[[i]],];
-  xy_list[[i]]$named1 <- s_obj_meta[[i]]$take2;
-  test <- rbind(missing.coord[[i]], xy_list[[i]])
-  ggplot_ls[[i]] <- ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
-    geom_point(size=0.2)+theme_classic()+scale_color_manual(values = bright) &
-    NoLegend() & thin
-}
-
-library(grid)
-library(gridExtra)
-
-grid.arrange(grobs = ggplot_ls, ncol=3)
+gen2 <- c("SMA","COL4A1","CD146","COL6A1","DKK3", "COL3A1","COMP","FABP4","COL1","POSTN","SPARC", "MMP3", "PDPN","LYVE1", 
+          "CD68",  "CD3", "MCT","CD20","CD15","CLU", "APOD")
+Idents(all) <- "SCT_snn_res.0.2"
+DotPlot(all, features =gen2, cluster.idents = T) & formplot
 
 ###################################################################### 
-###################################################################### 
 
-#run on cluster
-load(file="matrix-3.RData")
+# some clusters look quite similar, try lower resolution
+all<-FindClusters(all, resolution = c(0.16), graph.name="SCT_snn")
 
-plt_df <- coloc_res_coarse %>%
-  subset(pval < 0.05) %>%
-  dplyr::select(index_type, type, zscore) %>%
-  spread(type, zscore, fill = 0) %>%
-  column_to_rownames('index_type') %>%
-  as.matrix
+Idents(all) <- "SCT_snn_res.0.16"
+DotPlot(all, features =gen2, cluster.idents = T) & formplot
 
-plt_df[-c(2,17,19),-c(2,17,19)] %>%
-  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, cluster_columns = T, cluster_rows = T)
+# res 0.16 has no overlapping of gene profile across clusters
 
-plt_df_use <- plt_df[-c(2,17,19),-c(2,17,19)]
-plt_df_use2 <- plt_df_use+t(plt_df_use)
-plt_df_use2 %>%
-  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, cluster_columns = T, cluster_rows = T)
 
 ###################################################################### 
-###################################################################### 
 
-group.color <- c("SMA-hi vessels"="red", "SMA-low vessels"="cyan","COL1-hi fibroblasts"="blue",  "COL6-hi fibroblasts"="orange",
-                 "LL fibroblasts"= "magenta", "LL macrophages"="magenta", 
-                 "T cells" ="green3", "B/T aggregates"="yellow", "POSTN-hi fibroblasts"="snow3")
+Idents(all) <- "take2"
+DotPlot(all, features =gen2, cluster.idents=T) & formplot
+
+###################################################################### 
+group.color <- c("SMA-hi vessels"="cyan2", "SMA-low vessels"="blue", "Endothelial cells"="red","RBCs"="brown",
+                 "CLU-hi fibroblasts"="aquamarine3", "COL1-hi fibroblasts"="lemonchiffon",  "COL6-hi Fibroblasts"="snow3",
+                 "POSTN-hi fibroblasts"="salmon","COL6-hi fibroblasts"="steelblue","Sparse cells"= "darkseagreen1",
+                 "LL fibroblasts"= "magenta", "Collagen-dense region"="lightsalmon",
+                 "SPARC-hi fibroblasts"="yellow4", 
+                 "LL macrophages"="turquoise4", "Macrophages"="olivedrab1", "LYVE1+ macrophages"="orchid4",
+                 "T cells" ="mediumorchid1", "SMA-hi cells"="lightskyblue","B/T aggregates"="yellow",
+                 "Adipose"="green2",  "Mast cells"="darkorange","Muscle"="grey97", 
+                 "Lymphatics"="palevioletred",
+                 "Artefact"="azure","Fibrin"="skyblue2")
 
 # 1- 28, 2- 115, 3- 127, 4- 146, 5- 31, 6- 149, 7- 195, 8- 202, 9- 20, 10- 26, 11-240
 
+# 2, 3, 5, 7, 9, 11
 bright <- c( "plum1", "green", "yellow", "purple4", "darkorange",  "cyan","aquamarine3","deeppink4","#826D9B","bisque3","red",
              "lightpink", "forestgreen",  "steelblue3", "lightcyan",  "lemonchiffon", "blue",
-             "gold2", "yellow4", "royalblue4" ,  "mediumpurple", "seashell","black",  "lightskyblue1","yellowgreen", "cyan3", "palevioletred",
-             "lavenderblush2" ,"darkgrey","mediumorchid3","salmon2","mediumspringgreen","khaki" ,"brown")
+            "gold2", "yellow4", "royalblue4" ,  "mediumpurple", "seashell","black",  "lightskyblue1","yellowgreen", "cyan3", "palevioletred",
+            "lavenderblush2" ,"darkgrey","mediumorchid3","salmon2","mediumspringgreen","khaki" ,"brown")
 
 i <- 1
 i <- 2
@@ -373,25 +324,29 @@ test <- data_x_y[[nom]]
 test$named1 <- M915$take2
 iden <- unique(all$take2)
 
-#iden1 <- iden[grep("DKK|LL", iden)]
+iden1 <- iden[grep("COMP|Adi|Sparse|LL|POSTN", iden)]
 #iden1 <- iden[grep("vess|LL", iden)]
-#iden1 <- c("a", "b", "c", "d", "5", "6", "e", "f", "g", "h")
+#iden1 <- c("a", "b", "c", "d", "5", "6", "e", "f", "g", "h", "5", "6")
 #iden1 <- iden[grep("LYVE|COL3|LL|Mac", iden)]
-iden1 <- iden[grep("LL ma|COL1|COL6|T cells|B/T|vess|POSTN", iden)]
+#iden1 <- iden[grep("LL|COL1|COL6|T cells|B/T|vess", iden)]
 
 small <- test[test$named1 %in% iden1,]
 
 ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
   geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
-  guides(colour = guide_legend(override.aes = list(size=5))) 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=group.color) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
 
 # highlight in a small section
 
 small <- small[small$named1 %in% iden1,]
 
 ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
-  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=group.color) & 
-  guides(colour = guide_legend(override.aes = list(size=5))) & setv
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5))) 
 
 ###################################################################### 
 
@@ -445,13 +400,1437 @@ small <- test[test$Centroid.Y.µm > 2000 & test$Centroid.Y.µm < 4000 & test$Cen
 
 #11
 small <- test[test$Centroid.Y.µm < 3500  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 3600 & test$Centroid.X.µm < 6100,]
-small <- test[test$Centroid.Y.µm < 3800  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 3600,]
 small <- test[test$Centroid.Y.µm < 2800  & test$Centroid.Y.µm > 2000 &  test$Centroid.X.µm > 4800 & test$Centroid.X.µm < 6100,]
 small <- test[test$Centroid.Y.µm > 3500 &  test$Centroid.X.µm > 4000 & test$Centroid.X.µm < 7000,]
+small <- test[test$Centroid.Y.µm < 2000 &  test$Centroid.X.µm > 1800 & test$Centroid.X.µm < 3600,]
 small <- test[test$Centroid.Y.µm > 3000 &  test$Centroid.X.µm > 1000 & test$Centroid.X.µm < 3600,]
 small <- test[test$Centroid.Y.µm < 4000 &  test$Centroid.X.µm > 6000,]
 
-small <- test[test$Centroid.Y.µm < 3500 &  test$Centroid.Y.µm > 2500 & test$Centroid.X.µm > 4700 & test$Centroid.X.µm < 6000,]
-small <- test[test$Centroid.Y.µm < 1800 & test$Centroid.Y.µm > 700 &  test$Centroid.X.µm < 3400 &  test$Centroid.X.µm > 2800,]
-small <- test[test$Centroid.Y.µm > 4800 &  test$Centroid.X.µm > 4750,]
+small <- test[test$Centroid.Y.µm < 3000 & test$Centroid.X.µm < 3000,]
+
+###################################################################### 
+###################################################################### 
+
+# tried subclustering 10, no major distintions, just DAPI mainly
+
+Idents(all) <- "SCT_snn_res.0.16"
+LY <- subset(all, idents=12)
+
+LYb <- subset(LY, CD15 > 5)
+LYb$take2 <- "Artefact"
+LYc <- subset(LY, CD15 <= 5)
+LYc$take2 <- "SPARC-hi fibroblasts"
+
+anno <- rbind(LYc[["take2"]], LYb[["take2"]])
+LY <- AddMetaData(LY, anno, col.name="take2")
+table(LY$orig.ident, LY$take2)
+
+#annotate with new splits from clustering
+Idents(all) <- "SCT_snn_res.0.16"
+nLL <- subset(all, idents=12, invert=T)
+nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], LY[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+# tried subclustering 10, no major distintions, just DAPI mainly
+
+###################################################################### 
+###################################################################### 
+
+Idents(all) <- "SCT_snn_res.0.16"
+C6 <- subset(all, idents=9)
+
+#VlnPlot(C6, features=c("CD3", "CD20", "MCT", "DKK3"), pt.size=0)
+
+C6a <- subset(C6, DKK3 > 8)
+C6a$take2 <- "RBCs"
+C6c <- subset(C6, DKK3 <= 8 & MCT > 6)
+C6c$take2 <- "Mast cells"
+C6b <- subset(C6, DKK3 <= 8 & MCT <= 6)
+
+C6b <-FindNeighbors(C6b, dims = 1:21, reduction= "harmony", assay="SCT")
+C6b <-FindClusters(C6b, resolution = c(0.03), graph.name="SCT_snn")
+table(C6b$orig.ident, C6b@active.ident)
+
+Idents(C6b) <- "SCT_snn_res.0.03"
+C6b <- RenameIdents(C6b, "0"="T cells", "1"="B/T aggregates", "2"="B/T aggregates")
+C6b$take2 <- C6b@active.ident
+
+anno <- rbind(C6a[["take2"]], C6b[["take2"]], C6c[["take2"]])
+C6 <- AddMetaData(C6, anno, col.name="take2")
+table(C6$orig.ident, C6$take2)
+
+#annotate with new splits from clustering
+Idents(all) <- "SCT_snn_res.0.16"
+nLL <- subset(all, idents=9, invert=T)
+nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], C6[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+# cluster 8, make difference on clustering is DAPI intensity only
+
+###################################################################### 
+###################################################################### 
+
+Idents(all) <- "SCT_snn_res.0.16"
+C1 <- subset(all, idents=7)
+
+C1 <-FindNeighbors(C1, dims = 1:21, reduction= "harmony", assay="SCT")
+C1 <-FindClusters(C1, resolution = c(0.05), graph.name="SCT_snn")
+table(C1$orig.ident, C1@active.ident)
+
+Idents(C1) <- "SCT_snn_res.0.05"
+C1 <- RenameIdents(C1, "0"="COL1-hi fibroblasts", "1"="POSTN+COMP+ fibroblasts")
+C1$take2 <- C1@active.ident
+
+#annotate with new splits from clustering
+Idents(all) <- "SCT_snn_res.0.16"
+nLL <- subset(all, idents=7, invert=T)
+#nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], C1[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+# unable to find lymphatics despite clustering and using LYVE1 cut offs
+Idents(all) <- "SCT_snn_res.0.16"
+LL <- subset(all, idents=6)
+
+#VlnPlot(LL, features=c("SPARC", "PDPN", "MMP3", "CD68", "CD3", "CD15"), pt.size=0)
+
+LLt <- subset(LL, CD68 <= 7.5)
+LLt$take2 <- "LL fibroblasts"
+LLm <- subset(LL, CD68 > 7.5)
+LLo <- subset(LLm, PDPN <= 6 & COL3A1 <= 8)
+LLo$take2 <- "Macrophages"
+LLn <- subset(LLm, PDPN <= 6 & COL3A1 <= 8, invert=T)
+LLn$take2 <- "LL macrophages"
+
+anno <- rbind(LLt[["take2"]], LLn[["take2"]], LLo[["take2"]])
+LL <- AddMetaData(LL, anno, col.name="take2")
+table(LL$orig.ident, LL$take2)
+
+Idents(LL) <- "take2"
+VlnPlot(LL, features=c("SPARC", "PDPN", "COL3A1", "CD68", "MMP3", "CD15"), pt.size=0)
+
+#annotate with new splits from clustering
+Idents(all) <- "SCT_snn_res.0.16"
+nLL <- subset(all, idents=6, invert=T)
+nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], LL[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+Idents(all) <- "SCT_snn_res.0.16"
+SM <- subset(all, idents=5)
+
+SMa <- subset(SM, CD146 <= 4.5 & SMA <= 7)
+SMa$take2 <- "RBCs"
+SMd <- subset(SM, CD146 <= 4.5 & SMA <= 7, invert=T)
+
+SMc<- subset(SMd, DKK3 < 8 & CD146 < 4)
+SMc$take2 <- "SMA-hi cells"
+SMb <- subset(SMd, DKK3 < 8 & CD146 < 4, invert=T)
+
+SMb <-FindNeighbors(SMb, dims = 1:21, reduction= "harmony", assay="SCT")
+SMb <-FindClusters(SMb, resolution = c(0.05), graph.name="SCT_snn")
+table(SMb$orig.ident, SMb@active.ident)
+
+Idents(SMb) <- "SCT_snn_res.0.05"
+SMb <- RenameIdents(SMb, "0"="SMA-hi vessels", "1"="Small vessels", "2"="SMA-hi vessels")
+SMb$take2 <- SMb@active.ident
+
+anno <- rbind(SMa[["take2"]], SMb[["take2"]], SMc[["take2"]])
+SM <- AddMetaData(SM, anno, col.name="take2")
+table(SM$orig.ident, SM$take2)
+
+Idents(SM) <- "take2"
+VlnPlot(SM, features=c("SMA", "CD146", "DAPI-INIT", "DKK3", "CD3", "COL4A1"), pt.size=0)
+
+#annotate with new splits from clustering
+Idents(all) <- "SCT_snn_res.0.16"
+nLL <- subset(all, idents=5, invert=T)
+nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], SM[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+Idents(all) <- "SCT_snn_res.0.16"
+DK <- subset(all, idents=4)
+
+DKa <- subset(DK, POSTN <= 5.5)
+DKa$take2 <- "RBCs"
+DKi <- subset(DK, POSTN > 5.5 & DKK3 > 8)
+DKp <- subset(DK, POSTN > 5.5 & DKK3 < 8)
+DKp$take2 <- "SMA-hi cells"
+
+DKc <- subset(DKi, SPARC <= 7.6 & SMA > 7.5)
+DKc$take2 <- "SMA-hi cells"
+DKc1 <- subset(DKi, SPARC <= 7.6 & SMA <= 7.5)
+DKc1$take2 <- "RBCs"
+DKb <- subset(DKi, SPARC > 7.6 & CD146 > 4.8)
+DKb$take2 <- "Small vessels"
+DKb2 <- subset(DKi, SPARC > 7.6 & CD146 <= 4.8)
+DKb2$take2 <- "COL4+ fibroblasts"
+
+anno <- rbind(DKa[["take2"]], DKp[["take2"]], DKc[["take2"]], DKc1[["take2"]], DKb[["take2"]],DKb2[["take2"]])
+DK <- AddMetaData(DK, anno, col.name="take2")
+table(DK$orig.ident, DK$take2)
+
+Idents(DK) <- "take2"
+VlnPlot(DK, features=c("DKK3", "COL1", "COL6A1", "COL3A1"), pt.size=0)
+table(DK$orig.ident, DK$take2)
+
+#annotate with new splits from clustering
+Idents(all) <- "SCT_snn_res.0.16"
+nLL <- subset(all, idents=4, invert=T)
+#nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], DK[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+# tried clustering multiple times but unsucessful
+
+Idents(all) <- "SCT_snn_res.0.16"
+CL <- subset(all, idents=3)
+
+CLa <- subset(CL, CLU > 9.6 & SPARC > 7.5)
+CLa$take2 <- "Fibrin"
+CLb <- subset(CL, CLU > 9.6 & SPARC > 7.5, invert=T)
+
+CLb1 <- subset(CLb, APOD > 7.2 & CD20 < 4 & CD68 < 6)
+CLb1$take2 <- "Muscle"
+CLc <- subset(CLb, APOD > 7.2 & CD20 < 4 & CD68 < 6, invert=T)
+
+CLd1 <- subset(CLc, PDPN > 6.5 & CD68 <= 7.5)
+CLd1$take2 <- "LL fibroblasts"
+CLd2 <- subset(CLc, PDPN > 6.5 & CD68 > 7.5)
+CLd2$take2 <- "LL macrophages"
+
+CLe <- subset(CLc, PDPN <= 6.5 & FABP4 <= 5.8)
+CLe$take2 <- "CLU-hi fibroblasts"
+CLf <- subset(CLc, PDPN <= 6.5 & FABP4 > 5.6)
+CLf$take2 <- "Adipose"
+
+anno <- rbind(CLa[["take2"]], CLb1[["take2"]], CLe[["take2"]], CLd1[["take2"]], CLd2[["take2"]], CLf[["take2"]])
+CL <- AddMetaData(CL, anno, col.name="take2")
+table(CL$orig.ident, CL$take2)
+
+Idents(CL) <- "take2"
+VlnPlot(CL, features=c("SPARC", "PDPN", "CD3", "FABP4", "APOD", "CD68"), pt.size=0)
+
+Idents(CL) <- "take2"
+check <- subset(CL, idents="b")
+Idents(check) <- "orig.ident"
+DotPlot(check, features=gen2, cluster.idents = T) & formplot
+VlnPlot(check, features=c("SPARC", "COL3A1", "CD146", "APOD", "CD20", "CD68"), pt.size=0)
+
+#annotate with new splits from clustering
+Idents(all) <- "SCT_snn_res.0.16"
+nLL <- subset(all, idents=3, invert=T)
+nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], CL[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+# clustering unable to distinguish at res of 0.05, 0.08, 0.1, 0.12, 0.15
+Idents(all) <- "SCT_snn_res.0.16"
+AD <- subset(all, idents=2)
+
+ADa <- subset(AD, CD68 > 7.4)
+ADa$take2 <- "LL macrophages"
+ADb <- subset(AD, CD68 <= 7.4)
+
+ADc <- subset(ADb, PDPN > 7.5 & MMP3 > 7.8)
+ADc$take2 <- "LL fibroblasts"
+ADd <- subset(ADb, PDPN > 7.5 & MMP3 > 7.8, invert=T)
+
+ADb1 <- subset(ADd, FABP4 <= 5.5 & COL1 > 5)
+ADb1$take2 <- "COL3-hi fibroblasts"
+ADb2 <- subset(ADd, FABP4 <= 5.5 & COL1 > 5, invert=T)
+ADb2$take2 <- "Adipose"
+
+anno <- rbind(ADa[["take2"]],ADc[["take2"]],ADb1[["take2"]],ADb2[["take2"]])
+AD <- AddMetaData(AD, anno, col.name="take2")
+table(AD$orig.ident, AD$take2)
+
+Idents(AD) <- "take2"
+VlnPlot(AD, features=c("FABP4", "COL3A1", "SPARC", "MMP3", "CD68", "PDPN"), pt.size=0)
+
+#annotate with new splits from clustering
+Idents(all) <- "SCT_snn_res.0.16"
+nLL <- subset(all, idents=2, invert=T)
+nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], AD[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+# tried subclustering 0, but no major artefacts or subgroups, tried res 0.03, 0.4, 0.5, 0.8
+
+Idents(all) <- "SCT_snn_res.0.16"
+CC <- subset(all, idents=1)
+
+CCa <- subset(CC, CD3 > 7.5)
+CCa$take2 <- "T cells"
+CCb <- subset(CC, CD3 <= 7.5 & POSTN > 8)
+CCb$take2 <- "POSTN-hi fibroblasts"
+CCc <- subset(CC, CD3 <= 7.5 & POSTN <= 8)
+CCc$take2 <- "Low-staining cells"
+
+anno <- rbind(CCa[["take2"]], CCb[["take2"]], CCc[["take2"]])
+CC <- AddMetaData(CC, anno, col.name="take2")
+table(CC$orig.ident, CC$take2)
+
+#CC <-FindNeighbors(CC, dims = 1:21, reduction= "harmony", assay="SCT")
+#CC <-FindClusters(CC, resolution = c(0.05), graph.name="SCT_snn")
+#table(CC$orig.ident, CC@active.ident)
+
+#Idents(CC) <- "SCT_snn_res.0.05"
+#CC <- RenameIdents(CC, "0"="a", "1"="b", "2"="c", "3"="d", "4"="e")
+#CC$take2 <- CC@active.ident
+
+#Idents(CC) <- "SCT_snn_res.0.05"
+#CC <- RenameIdents(CC, "0"="POSTN-hi fibroblasts", "1"="T cells", "2"="POSTN-hi fibroblasts", "3"="Low-staining", "4"="POSTN-hi fibroblasts")
+#CC$take2 <- CC@active.ident
+
+Idents(CC) <- "take2"
+VlnPlot(CC, features=c("CD3", "SPARC", "DAPI-FINAL", "POSTN", "PDPN", "CD15"), pt.size=0)
+
+#annotate with new splits from clustering
+Idents(all) <- "SCT_snn_res.0.16"
+nLL <- subset(all, idents=1, invert=T)
+nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], CC[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+Idents(all) <- "SCT_snn_res.0.16"
+CO <- subset(all, idents=0)
+
+#VlnPlot(CO, features=c("CD15", "CD3", "CD68", "COMP", "SPARC", "COL1"), pt.size=0)
+
+COd <- subset(CO, CD68 <= 7.5)
+COd$take2 <- "COMP-hi fibroblasts"
+COc <- subset(CO, CD68 > 7.5)
+COc$take2 <- "Macrophages"
+
+anno <- rbind(COc[["take2"]], COd[["take2"]])
+CO <- AddMetaData(CO, anno, col.name="take2")
+table(CO$orig.ident, CO$take2)
+
+Idents(CO) <- "take2"
+VlnPlot(CO, features=c("CD15", "CD3", "CD68", "COMP", "SPARC", "MCT"), pt.size=0)
+
+
+DotPlot(CO, features=gen2, cluster.idents=T) & formplot
+
+
+#annotate with new splits from clustering
+Idents(all) <- "SCT_snn_res.0.16"
+nLL <- subset(all, idents=0, invert=T)
+nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], CO[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+Idents(all) <- "SCT_snn_res.0.16"
+all <- RenameIdents(all, "8"="COL6-hi fibroblasts", "10"= "LYVE1+ Macrophages", "11"="Mast cells")
+all$take2 <- all@active.ident
+
+Idents(all) <- "SCT_snn_res.0.16"
+nLL <- subset(all, idents=c(0,1,2,3,4,5,6,7,9,12), invert=T)
+anno <- rbind(LY[["take2"]],C1[["take2"]],C6[["take2"]],SM[["take2"]],DK[["take2"]],CL[["take2"]],LL[["take2"]],
+                   AD[["take2"]],CC[["take2"]], CO[["take2"]], nLL[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+#save(LY,C6,C1,LL,SM,DK,CL,AD,CC,CO, nLL, file="cd-objects")
+
+###################################################################### 
+###################################################################### 
+
+
+
+
+load(file="cd-objects")
+anno <- rbind(LY[["take2"]],C1[["take2"]],C6[["take2"]],SM[["take2"]],DK[["take2"]],CL[["take2"]],LL[["take2"]],
+              AD[["take2"]],CC[["take2"]], CO[["take2"]], nLL[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+
+
+
+
+###################################################################### 
+###################################################################### 
+
+Idents(all) <- "take2"
+MC <- subset(all, idents="Mast cells")
+#VlnPlot(MC, features=c("CD15", "DKK3", "CD68", "COMP", "SMA", "COL1"), pt.size=0)
+
+MC <-FindNeighbors(MC, dims = 1:21, reduction= "harmony", assay="SCT")
+MC <-FindClusters(MC, resolution = c(0.15), graph.name="SCT_snn")
+table(MC$orig.ident, MC@active.ident)
+
+Idents(MC) <- "SCT_snn_res.0.15"
+MC <- RenameIdents(MC, "0"="RBCs", "1"="Mast cells", "2"="Mast cells", "3"="Mast cells", "4"="RBCs", "5"="Adipose", "6"="Artefact", "7"="Mast cells")
+MC$take2 <- MC@active.ident
+
+Idents(all) <- "take2"
+nLL <- subset(all, idents="Mast cells", invert=T)
+#nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], MC[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+#save(MC, nLL, file="cd-objects-2")
+
+###################################################################### 
+###################################################################### 
+
+Idents(all) <- "take2"
+LC <- subset(all, idents=c("COMP-hi fibroblasts"))
+
+#VlnPlot(LC, features=c("FABP4", "LYVE1", "SMA", "PDPN", "CD68", "COMP"), pt.size=0)
+
+LCb <- subset(LC, LYVE1 > 6  & PDPN > 6 & CD68 < 4.5 & FABP4 < 4.5)
+LCb$take2 <- "Lymphatics"
+LCc <- subset(LC, LYVE1 > 6  & PDPN > 6 & CD68 < 4.5 & FABP4 < 4.5, invert=T)
+LCc$take2 <- "COMP-hi fibroblasts"
+
+anno <- rbind(LCc[["take2"]], LCb[["take2"]])
+LC <- AddMetaData(LC, anno, col.name="take2")
+table(LC$orig.ident, LC$take2)
+
+#annotate with new splits from clustering
+Idents(all) <- "take2"
+nLL <- subset(all, idents=c("COMP-hi fibroblasts"), invert=T)
+#nLL$take3 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], LC[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+#save(LC, nLL, file="cd-objects-3")
+
+###################################################################### 
+###################################################################### 
+
+Idents(all) <- "take2"
+EC <- subset(all, idents=c("RBCs"))
+
+#VlnPlot(EC, features=c("APOD", "CD146", "SPARC", "DAPI-INIT", "COL4A1", "DAPI-FINAL"), pt.size=0)
+
+ECb <- subset(EC, SPARC > 7.5 & SMA > 6.5 & APOD < 8)
+ECb$take2 <- "Small vessels"
+ECc <- subset(EC, SPARC > 7.5 & SMA > 6.5 & APOD < 8, invert=T)
+ECc$take2 <- "RBCs"
+
+anno <- rbind(ECc[["take2"]], ECb[["take2"]])
+EC <- AddMetaData(EC, anno, col.name="take2")
+table(EC$orig.ident, EC$take2)
+
+#annotate with new splits from clustering
+
+Idents(all) <- "take2"
+nLL <- subset(all, idents=c("RBCs"), invert=T)
+#nLL$take3 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], EC[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+#annotate with new splits from clustering
+Idents(all) <- "take2"
+nLL <- subset(all, idents=c("COMP-hi fibroblasts", "Mast cells", "RBCs"), invert=T)
+anno <- rbind(nLL[["take2"]], LC[["take2"]], EC[["take2"]], MC[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+save(LC, EC, MC, nLL, file="cd-objects-4")
+
+###################################################################### 
+###################################################################### 
+
+
+
+
+
+load(file="cd-objects-4")
+anno <- rbind(nLL[["take2"]], LC[["take2"]], EC[["take2"]], MC[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+
+
+
+
+
+###################################################################### 
+###################################################################### 
+
+DefaultAssay(all) <- "SCT"
+Idents(all) <- "take2"
+DotPlot(all, features =gen2, cluster.idents = T) & formplot
+
+iden <- unique(all$take2)
+iden <- iden[grep("Artefact", iden, invert=T)]
+Idents(all) <- "take2"
+dotp <- subset(all, idents=iden)
+DotPlot(dotp, features =gen2, cluster.idents = T) & formplot
+
+###################################################################### 
+###################################################################### 
+###################################################################### 
+
+#28
+# Remove artefacts
+i <- 1
+
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+small <- test[test$Centroid.Y.µm < 2200  & test$Centroid.Y.µm > 1600 &  test$Centroid.X.µm > 3600 & test$Centroid.X.µm < 4300,]
+exclude1a <- small$coord
+
+small <- test[test$Centroid.X.µm > 4200 & test$named1 %in% c("COL6-hi fibroblasts", "Muscle", "COL1-hi fibroblasts", "B/T aggregates", "T cells", "Small vessels"),]
+exclude1b <- small$coord
+
+small <- test[test$Centroid.Y.µm < 1500 & test$named1 %in% c("Muscle", "COL1-hi fibroblasts","B/T aggregates"),]
+exclude1c <- small$coord
+
+###################################################################### 
+
+#115
+i <- 2
+
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+small <- test[test$Centroid.Y.µm > 2200  & test$Centroid.Y.µm < 2900  & test$Centroid.X.µm > 6700 & test$Centroid.X.µm < 7140 & test$named1 %in% "RBCs",]
+vessel2 <- small$coord
+
+small <- test[test$Centroid.Y.µm > 2000  & test$Centroid.Y.µm < 2400  & test$Centroid.X.µm > 7100 & test$Centroid.X.µm < 7500 & test$named1 %in% c("SMA-hi vessels"),]
+rbc2 <- small$coord
+
+small <- test[test$Centroid.Y.µm > 3700  & test$Centroid.X.µm > 5500,]
+exclude2a <- small$coord
+
+small <- test[test$Centroid.Y.µm > 3150  & test$Centroid.Y.µm < 3700  & test$Centroid.X.µm > 5500 & test$Centroid.X.µm < 6480,]
+exclude2b <- small$coord
+
+small <- test[test$Centroid.Y.µm > 2000 & test$Centroid.Y.µm < 3600 & test$Centroid.X.µm < 3200,]
+
+small <- test[test$Centroid.Y.µm < 3200 & test$Centroid.Y.µm > 3000 & test$Centroid.X.µm < 2550 & test$Centroid.X.µm > 2380 & test$named1 %in% "T cells",]
+exclude2c <- small$coord
+
+small <- test[test$Centroid.Y.µm > 4000 & test$Centroid.X.µm < 5000,]
+small <- test[test$Centroid.Y.µm > 5500 & test$Centroid.X.µm < 3000 & test$named1 %in% "B/T aggregates",]
+exclude2d <- small$coord
+
+###################################################################### 
+
+# 127
+i <- 3
+
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+small <- test[test$Centroid.Y.µm > 4900 & test$Centroid.Y.µm < 7000 & test$Centroid.X.µm < 2500,]
+small <- test[test$Centroid.Y.µm > 5900 & test$Centroid.Y.µm < 7000 & test$Centroid.X.µm > 2000 & test$Centroid.X.µm < 2300 & test$named1 %in% "Mast cells",]
+exclude3a <- small$coord
+
+small <- test[test$Centroid.Y.µm > 6000 & test$Centroid.X.µm > 2000 & test$Centroid.X.µm < 4000,]
+small <- test[test$Centroid.Y.µm > 6500 & test$Centroid.Y.µm < 6830 & test$Centroid.X.µm > 2300 & test$Centroid.X.µm < 3550 & test$named1 %in% "Small vessels",]
+exclude3b <- small$coord
+small <- test[test$Centroid.Y.µm > 6830 & test$Centroid.Y.µm < 7500 & test$Centroid.X.µm > 3300 & test$Centroid.X.µm < 3550 & test$named1 %in% "Small vessels",]
+exclude3c <- small$coord
+
+small <- test[test$Centroid.X.µm > 4000,]
+small <- test[test$Centroid.X.µm > 4000 & test$Centroid.Y.µm < 6000 & test$named1 %in% "T cells",]
+exclude3d <- small$coord
+
+small <- test[test$Centroid.X.µm > 4000  & test$Centroid.Y.µm > 6000,]
+small <- test[test$Centroid.Y.µm < 4500  & test$Centroid.X.µm < 4000,]
+
+small <- test[test$Centroid.Y.µm > 1600  & test$Centroid.Y.µm < 1900  & test$Centroid.X.µm > 2100 & test$named1 %in% c("T cells", "B/T aggregates", "COL1-hi fibroblasts", "Macrophages", "LL macrophages", "LL fibroblasts"),]
+exclude3e <- small$coord
+
+small <- test[test$Centroid.Y.µm < 1550   & test$Centroid.X.µm < 2700 & test$named1 %in% c("T cells", "Small vessels", "B/T aggregates", "Mast cells"),]
+fibrin3 <- small$coord
+
+small <- test[test$Centroid.X.µm > 4500  & test$Centroid.Y.µm < 6000 & test$named1 %in% c("COL4-hi fibroblasts", "COMP-hi fibroblasts"),]
+rbc3 <- small$coord
+small <- test[test$Centroid.X.µm > 5800 & test$Centroid.Y.µm > 4250 & test$Centroid.Y.µm < 6000 & test$named1 %in% c("T cells"),]
+fibrin3b <- small$coord
+small <- test[test$Centroid.X.µm > 4500  & test$Centroid.X.µm < 5800 & test$Centroid.Y.µm > 4500 & test$Centroid.Y.µm < 6000 & test$named1 %in% c("T cells"),]
+fibrin3b <- small$coord
+
+small <- test[test$named1 %in% "Endothelial cells",]
+rbcs3a <- small$coord
+
+###################################################################### 
+
+#146
+i <- 4
+
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+small <- test[test$Centroid.X.µm < 4000  & test$Centroid.Y.µm < 5000,]
+small <- test[test$Centroid.X.µm < 1600  & test$Centroid.Y.µm < 5000 & test$Centroid.Y.µm > 3000 & test$named1 %in% "SPARC-hi fibroblasts",]
+LLfibro4 <- small$coord
+
+small <- test[test$Centroid.X.µm > 4000  & test$Centroid.Y.µm > 2500 & test$Centroid.Y.µm < 6500,]
+small <- test[test$Centroid.X.µm > 8000  & test$Centroid.Y.µm < 3750 & test$Centroid.Y.µm > 3000 & test$named1 %in% "Adipose",]
+CLU4 <- small$coord
+
+small <- test[test$Centroid.X.µm > 6000  & test$Centroid.Y.µm < 2000,]
+small <- test[test$Centroid.X.µm > 6500 & test$Centroid.X.µm < 8000  & test$Centroid.Y.µm < 1100 & test$named1 %in% "T cells",]
+exclude4a <- small$coord
+
+small <- test[test$Centroid.X.µm > 6500 & test$Centroid.X.µm < 8600  & test$Centroid.Y.µm < 1000 & test$named1 %in% "COL3-hi fibroblasts",]
+LLfibro4a <- small$coord
+
+small <- test[test$Centroid.X.µm < 4500  & test$Centroid.Y.µm > 7400,]
+small <- test[test$Centroid.X.µm < 4500  & test$Centroid.Y.µm > 7400 & test$named1 %in% c("COL3-hi fibroblasts"),]
+
+########################## 
+
+relabel <- subset(all, coordinates %in% small$coord)
+relabel <-FindNeighbors(relabel, dims = 1:21, reduction= "harmony", assay="SCT")
+relabel <-FindClusters(relabel, resolution = c(0.08), graph.name="SCT_snn")
+table(relabel$orig.ident, relabel@active.ident)
+relabel <- RenameIdents(relabel, "0"="LL fibroblasts", "1"="COL3-hi fibroblasts")
+relabel$take2 <- relabel@active.ident
+
+nLL <- subset(all, coordinates %in% small$coord, invert=T)
+anno <- rbind(relabel[["take2"]], nLL[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+
+###################################################################### 
+#31
+i <- 5
+
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+small <- test[test$Centroid.X.µm < 1100  & test$Centroid.Y.µm < 1300,]
+exclude5a <- small$coord
+
+small <- test[test$Centroid.X.µm > 1500  & test$Centroid.X.µm < 2600  & test$Centroid.Y.µm < 1000,]
+exclude5b <- small$coord
+
+small <- test[test$Centroid.X.µm > 2800  & test$Centroid.Y.µm < 3500,]
+
+small <- test[test$Centroid.X.µm > 2800  & test$Centroid.Y.µm < 3500 & test$Centroid.Y.µm > 2000,]
+small <- test[test$Centroid.X.µm > 4100  & test$Centroid.X.µm < 4250  & test$Centroid.Y.µm < 2750 & test$Centroid.Y.µm > 2480 & test$named1 %in% "Mast cells",]
+rbc5 <- small$coord
+small <- test[test$Centroid.X.µm > 3000  & test$Centroid.X.µm < 3250  & test$Centroid.Y.µm < 2900 & test$Centroid.Y.µm > 2500 & test$named1 %in% "Mast cells",]
+rbc5b <- small$coord
+small <- test[test$Centroid.X.µm > 3200  & test$Centroid.X.µm < 4000  & test$Centroid.Y.µm > 1500 & test$Centroid.Y.µm < 2160 & test$named1 %in% "Mast cells",]
+rbc5c <- small$coord
+small <- test[test$Centroid.X.µm > 3100  & test$Centroid.X.µm < 3600  & test$Centroid.Y.µm > 2100 & test$Centroid.Y.µm < 2280 & test$named1 %in% c("Mast cells", "T cells", "Macrophages"),]
+rbc5d <- small$coord
+small <- test[test$Centroid.X.µm > 3000  & test$Centroid.X.µm < 3200  & test$Centroid.Y.µm > 2500 & test$Centroid.Y.µm < 2900 & !(test$named1 %in% "COL1-hi fibroblasts"),]
+rbc5e <- small$coord
+
+small <- test[test$Centroid.X.µm > 3950  & test$Centroid.X.µm < 4050  & test$Centroid.Y.µm > 2700 & test$Centroid.Y.µm < 2750 & test$named1 %in% "T cells",]
+exclude5c <- small$coord
+
+small <- test[test$Centroid.X.µm > 2800 & test$Centroid.Y.µm < 2000,]
+small <- test[test$Centroid.X.µm > 3270 & test$Centroid.Y.µm < 1350 & test$Centroid.Y.µm > 1000 & test$named1 %in% "COL1-hi fibroblasts",]
+exclude5d <- small$coord
+
+small <- test[test$Centroid.X.µm > 1000 & test$Centroid.X.µm < 2800 & test$Centroid.Y.µm < 2800 & test$Centroid.Y.µm > 1000,]
+small <- test[test$Centroid.X.µm > 1750 & test$Centroid.X.µm < 2100 & test$Centroid.Y.µm > 2350 & test$Centroid.Y.µm < 2700 & test$named1 %in% "Mast cells",]
+exclude5e <- small$coord
+
+small <- test[test$Centroid.X.µm < 1500 & test$Centroid.Y.µm > 1600,]
+small <- test[test$Centroid.X.µm > 1500 & test$Centroid.Y.µm > 3200,]
+
+small <- test[test$Centroid.X.µm > 2250 & test$Centroid.X.µm < 2550 & test$Centroid.Y.µm > 3200 & test$Centroid.Y.µm < 3700 & test$named1 %in% c("Mast cells", "SMA-hi cells", "SMA-hi vessels", "T cells"),]
+rbc5f <- small$coord
+
+small <- test[test$named1 %in% "Endothelial cells",]
+rbcs5g <- small$coord
+
+small <- test[test$named1 %in% "Macrophages",]
+LLmac <- small$coord
+
+###################################################################### 
+
+#149
+i <- 6
+
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+small <- test[test$Centroid.X.µm < 3000  & test$Centroid.Y.µm < 6000,]
+small <- test[test$Centroid.X.µm < 3000 & test$Centroid.X.µm > 1500  & test$Centroid.Y.µm < 3000,]
+small <- test[test$Centroid.X.µm > 8000  & test$Centroid.Y.µm < 3000,]
+
+small <- test[test$Centroid.X.µm > 9500  & test$Centroid.X.µm < 9700  & test$Centroid.Y.µm < 1200 & test$Centroid.Y.µm > 1000 & test$named1 %in% "T cells",]
+exclude6a <- small$coord
+
+small <- test[test$Centroid.X.µm > 2000  & test$Centroid.Y.µm > 6000,]
+
+###################################################################### 
+
+#202
+i <- 7
+
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+########################## 
+
+small <- test[test$named1 %in% "T cells",]
+relabel2 <- subset(all, coordinates %in% small$coord)
+relabel2 <-FindNeighbors(relabel2, dims = 1:21, reduction= "harmony", assay="SCT")
+relabel2 <-FindClusters(relabel2, resolution = c(0.15), graph.name="SCT_snn")
+table(relabel2$orig.ident, relabel2@active.ident)
+
+Idents(relabel2) <- "SCT_snn_res.0.15"
+relabel2 <- RenameIdents(relabel2, "0"="T cells", "1"="POSTN-hi fibroblasts", "2"="T cells", "3"="B/T aggregates")
+relabel2$take2 <- relabel2@active.ident
+
+nLL <- subset(all, coordinates %in% small$coord, invert=T)
+anno <- rbind(relabel2[["take2"]], nLL[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+########################## 
+
+small <- test[test$Centroid.Y.µm < 1700,]
+exclude7a <- small$coord
+
+small <- test[test$Centroid.X.µm > 5000  & test$Centroid.X.µm < 7500  & test$Centroid.Y.µm <3000 & test$Centroid.Y.µm > 1700,]
+small <- test[test$Centroid.X.µm > 5500 & test$Centroid.Y.µm > 3200 & test$Centroid.Y.µm < 8000,]
+
+small <- test[test$Centroid.X.µm > 8250 & test$Centroid.Y.µm > 5250 & test$Centroid.Y.µm < 7500,]
+exclude7b <- small$coord
+
+small <- test[test$Centroid.X.µm > 8000 & test$Centroid.Y.µm > 7500 & test$Centroid.Y.µm < 7560,]
+exclude7c <- small$coord
+
+small <- test[test$Centroid.X.µm > 5500 & test$Centroid.Y.µm > 7500,]
+small <- test[test$Centroid.X.µm > 8350 & test$Centroid.Y.µm > 7500 & test$Centroid.Y.µm < 7800 & test$named1 %in% "POSTN-hi fibroblasts",]
+exclude7d <- small$coord
+
+small <- test[test$Centroid.X.µm < 5500 & test$Centroid.Y.µm > 2500 & test$Centroid.Y.µm < 7300,]
+
+small <- test[test$Centroid.X.µm < 2600 & test$Centroid.Y.µm > 4000 & test$Centroid.Y.µm < 5000,]
+
+small <- test[test$Centroid.X.µm < 2600 & test$Centroid.X.µm > 1900 & test$Centroid.Y.µm > 4370 & test$Centroid.Y.µm < 4550 & test$named1 %in% c("POSTN-hi fibroblasts", "COL1-hi fibroblasts", "POSTN+COMP+ fibroblasts", "Mast cells"),]
+exclude7e <- small$coord
+
+small <- test[test$Centroid.X.µm < 1500 & test$Centroid.X.µm > 700 & test$Centroid.Y.µm > 4150 & test$Centroid.Y.µm < 4500 & test$named1 %in% c("T cells", "B/T aggregates", "SMA-hi cells"),]
+exclude7f <- small$coord
+
+small <- test[test$Centroid.X.µm < 6000 & test$Centroid.X.µm > 5200 & test$Centroid.Y.µm > 4900 & test$Centroid.Y.µm < 6050 & test$named1 %in% c("T cells", "B/T aggregates", "SMA-hi cells", "COMP-hi fibroblasts"),]
+exclude7g <- small$coord
+
+small <- test[test$Centroid.X.µm > 2900 & test$Centroid.X.µm < 3500 & test$Centroid.Y.µm > 7700 & test$Centroid.Y.µm < 8000 & test$named1 %in% c("COL1-hi fibroblasts"),]
+exclude7h <- small$coord
+
+small <- test[test$Centroid.X.µm < 5000 & test$Centroid.Y.µm > 7000,]
+small <- test[test$Centroid.X.µm > 2900 & test$Centroid.X.µm < 3500 & test$Centroid.Y.µm > 7800 & test$named1 %in% c("POSTN-hi fibroblasts"),]
+exclude7i <- small$coord
+
+small <- test[test$named1 %in% "Lymphatics",]
+exclude7j <- small$coord
+
+small <- test[test$named1 %in% "Macrophages",]
+LLmac7a <- "LL macrophages"
+
+###################################################################### 
+
+# 202
+bright <- c( "plum1", "cyan", "blue", "yellow","steelblue3", "lemonchiffon", "seashell", "purple4", "honeydew3", "darkorange",
+             "red","aquamarine3" ,"deeppink4","#826D9B","bisque3",
+             "lightpink",  "forestgreen", "green",
+             "gold2",  "yellow4", "royalblue4" , "lightcyan",  "mediumpurple", "black","red",  "lightskyblue1",
+             "yellowgreen",  "cyan3", "palevioletred",
+             "lavenderblush2" ,"darkgrey","mediumorchid3","salmon2","mediumspringgreen","khaki" ,"brown")
+
+i <- 8
+
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+small <- test[test$Centroid.X.µm < 2300 & test$Centroid.Y.µm > 2000 & test$Centroid.Y.µm < 4200,]
+small <- test[test$Centroid.X.µm < 2300 & test$Centroid.Y.µm > 4200,]
+
+small <- test[test$Centroid.X.µm < 2300 & test$Centroid.Y.µm > 4200 & test$named1 %in% "COMP-hi fibroblasts",]
+muscle8a <- small$coord
+
+small <- test[test$Centroid.X.µm < 2300 & test$Centroid.Y.µm > 4200 & test$named1 %in% "LL fibroblasts",]
+lymphatics8a <- small$coord
+
+small <- test[test$Centroid.X.µm < 3700 & test$Centroid.Y.µm < 2000,]
+
+small <- test[test$Centroid.X.µm > 3700 & test$Centroid.Y.µm < 2000 & test$Centroid.X.µm < 5500,]
+small <- test[test$Centroid.X.µm > 3700 & test$Centroid.Y.µm < 2000 & test$Centroid.X.µm < 5500 & test$named1 %in% "Adipose",]
+exclude8a <- small$coord
+
+small <- test[test$Centroid.X.µm > 3500 & test$Centroid.Y.µm > 1700 & test$Centroid.Y.µm < 3300,]
+
+small <- test[test$Centroid.X.µm > 5000 & test$Centroid.Y.µm > 3300,]
+              
+###################################################################### 
+
+#20
+i <- 9
+
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+small <- test[test$Centroid.X.µm < 2000 & test$Centroid.Y.µm < 2500,]
+small <- test[test$Centroid.X.µm > 800 & test$Centroid.X.µm < 1550 & test$Centroid.Y.µm < 2000 & test$named1 %in% "B/T aggregates",]
+exclude9a <- small$coord
+
+small <- test[test$Centroid.X.µm < 2500 & test$Centroid.Y.µm < 3800 & test$Centroid.Y.µm > 2200,]
+
+small <- test[test$Centroid.X.µm < 2500 & test$Centroid.Y.µm < 3800 & test$Centroid.Y.µm > 2200 & test$named1 %in% c("Mast cells","B/T aggregates"),]
+rbc9a <- small$coord
+small <- test[test$Centroid.X.µm < 2350 & test$Centroid.X.µm > 2000 & test$Centroid.Y.µm < 3500 & test$Centroid.Y.µm > 3000 & test$named1 %in% "LL fibroblasts",]
+rbc9b <- small$coord
+
+small <- test[test$Centroid.X.µm < 3000 & test$Centroid.Y.µm > 3800,]
+small <- test[test$Centroid.X.µm < 3000 & test$Centroid.Y.µm > 3800 & test$named1 %in% "Muscle",]
+exclude9a <- small$coord
+
+small <- test[test$Centroid.X.µm > 2000 & test$Centroid.Y.µm <2000,]
+small <- test[test$Centroid.X.µm > 2000 & test$Centroid.X.µm < 3200 & test$Centroid.Y.µm < 800 & test$named1 %in% c("Mast cells, COL1-hi fibroblasts", "Muscle", "B/T aggregates"),]
+exclude9b <- small$coord
+
+small <- test[test$Centroid.X.µm < 3300 & test$Centroid.X.µm > 2700 & test$Centroid.Y.µm < 750 & test$named1 %in% c("T cells"),]
+exclude9c <- small$coord
+
+small <- test[test$Centroid.X.µm > 2000 & test$Centroid.Y.µm >2000 & test$Centroid.Y.µm < 3800,]
+small <- test[test$Centroid.X.µm > 2000 & test$Centroid.Y.µm >2000 & test$Centroid.Y.µm < 3800 & test$named1 %in% "Muscle", ]
+exclude9d <- small$coord
+
+small <- test[test$Centroid.X.µm > 3500 & test$Centroid.Y.µm >2500,]
+small <- test[test$Centroid.X.µm > 3500 & test$Centroid.Y.µm >2500 & test$named1 %in% "Muscle",]
+exclude9e <- small$coord
+
+small <-test[test$named1 %in% c("Endothelial cells"),]
+rbc9c <- small$coord
+
+small <- test[test$Centroid.X.µm > 1950 & test$Centroid.X.µm < 2400 & test$Centroid.Y.µm > 3050 & test$Centroid.Y.µm < 3700 & !(test$named1 %in% "RBCs"),]
+exclude9f <- small$coord
+
+small <- test[test$Centroid.X.µm > 700 & test$Centroid.X.µm < 1500 & test$Centroid.Y.µm > 3600 & test$Centroid.Y.µm < 4350,]
+exclude9g <- small$coord
+
+###################################################################### 
+
+i <- 10
+
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+small <- test[test$Centroid.X.µm < 1000 & test$Centroid.Y.µm < 4200  & test$Centroid.Y.µm > 2200,]
+
+small <- test[test$Centroid.X.µm > 650 & test$Centroid.X.µm < 1300 & test$Centroid.Y.µm < 3950  & test$Centroid.Y.µm > 3200 & !(test$named1 %in% c("RBCs")),]
+exclude10a <- small$coord
+small <- test[test$Centroid.X.µm > 300 & test$Centroid.X.µm < 1000 & test$Centroid.Y.µm < 4000  & test$Centroid.Y.µm > 3750 & !(test$named1 %in% c("RBCs")),]
+exclude10b <- small$coord
+
+small <- test[test$Centroid.X.µm < 2200 & test$Centroid.Y.µm > 4300,]
+small <- test[test$Centroid.X.µm < 2600 & test$Centroid.Y.µm < 1500,]
+small <- test[test$Centroid.X.µm > 2600 & test$Centroid.Y.µm < 1500,]
+
+small <- test[test$Centroid.X.µm > 2000 & test$Centroid.X.µm < 3500 & test$Centroid.Y.µm < 3000 & test$Centroid.Y.µm > 800,]
+small <- test[test$Centroid.X.µm > 2200 & test$Centroid.X.µm < 3500 & test$Centroid.Y.µm < 2600 & test$Centroid.Y.µm > 1300 & test$named1 %in% c("Muscle", "B/T aggregates"),]
+exclude10c <- small$coord
+
+small <- test[test$Centroid.X.µm > 1000 & test$Centroid.X.µm < 2300 & test$Centroid.Y.µm < 3600 & test$Centroid.Y.µm > 1800,]
+small <- test[test$Centroid.X.µm > 1250 & test$Centroid.X.µm < 1600 & test$Centroid.Y.µm < 2900 & test$Centroid.Y.µm > 2450 & test$named1 %in% c("T cells", "B/T aggregates", "Mast cells"),]
+exclude10d <- small$coord
+
+small <- test[test$Centroid.X.µm > 1000 & test$Centroid.X.µm < 3700 & test$Centroid.Y.µm < 4700 & test$Centroid.Y.µm > 2700,]
+small <- test[test$Centroid.X.µm > 2400 & test$Centroid.X.µm < 2700 & test$Centroid.Y.µm < 4300 & test$Centroid.Y.µm > 3700 & test$named1 %in% c("T cells", "B/T aggregates"),]
+exclude10e <- small$coord
+
+small <- test[test$Centroid.X.µm >3000 & test$Centroid.Y.µm > 1900,]
+
+small <- test[test$Centroid.X.µm < 2500 & test$Centroid.X.µm > 2200 &  test$Centroid.Y.µm > 1500  & test$Centroid.Y.µm < 2200 & test$named1 %in% c("Macrophages"),]
+LLmacs10 <- small$coord
+
+small <- test[test$Centroid.X.µm < 2300 & test$Centroid.Y.µm < 1500,]
+small <- test[test$Centroid.X.µm < 1350 & test$Centroid.X.µm > 1200 & test$Centroid.Y.µm > 600 & test$Centroid.Y.µm < 1000 & test$named1 %in% "Macrophages",]
+LLmacs10b <- small$coord
+
+small <- test[test$Centroid.X.µm < 2300 & test$Centroid.X.µm > 2050 & test$Centroid.Y.µm > 1000 & test$Centroid.Y.µm < 1500 & test$named1 %in% "Macrophages",]
+LLmacs10c <- small$coord
+
+###################################################################### 
+
+i <- 11
+
+nom <- pt[[i]]
+Idents(all) <- "orig.ident"
+M915 <- subset(all, idents=nom)
+M915_meta <- M915@meta.data
+test <- data_x_y[[nom]]
+test$named1 <- M915$take2
+
+ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1)+theme_classic() & scale_y_reverse() & scale_color_manual(values=bright) &  
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+ggplot(small, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+  geom_point(size=1) & scale_y_reverse() & scale_color_manual(values=bright) & 
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+small <- test[test$Centroid.X.µm < 3500 & test$Centroid.Y.µm < 3000,]
+small <- test[test$Centroid.X.µm < 2800 & test$Centroid.X.µm > 2000 & test$Centroid.Y.µm < 2200 & test$Centroid.Y.µm > 1200,]
+small <- test[test$Centroid.X.µm < 2000 & test$Centroid.X.µm > 1650 & test$Centroid.Y.µm > 800 & test$Centroid.Y.µm < 1450 & test$named1 %in% c("COL1-hi fibroblasts", "POSTN+COMP+ fibroblasts"),]
+exclude11a <- small$coord
+
+small <- test[test$Centroid.X.µm < 1200 & test$Centroid.Y.µm > 2200 & test$Centroid.Y.µm < 4200,]
+small <- test[test$Centroid.X.µm < 3000 & test$Centroid.Y.µm > 3200,]
+small <- test[test$Centroid.X.µm > 3000 & test$Centroid.X.µm < 4800 & test$Centroid.Y.µm < 4000,]
+small <- test[test$Centroid.X.µm > 4000 & test$Centroid.X.µm < 6000 & test$Centroid.Y.µm > 2200 & test$Centroid.Y.µm < 3500,]
+
+small <- test[test$Centroid.X.µm > 5500 & test$Centroid.X.µm < 5700 & test$Centroid.Y.µm > 3100 & test$Centroid.Y.µm < 3250 & test$named1 %in% "Adipose",]
+sma11a <- small$coord
+
+small <- test[test$Centroid.X.µm > 6000 & test$Centroid.Y.µm < 3800 & test$Centroid.Y.µm > 1900,]
+
+small <- test[test$Centroid.X.µm > 4000 & test$Centroid.X.µm < 6700 & test$Centroid.Y.µm > 3500,]
+
+small <- test[test$Centroid.X.µm < 2050 & test$Centroid.Y.µm < 1550 & test$named1 %in% "Lymphatics",]
+exclude11b <- small$coord
+
+small <- test[test$Centroid.Y.µm < 2700 & test$Centroid.Y.µm > 1000 & test$Centroid.X.µm < 2000 & test$Centroid.X.µm > 1130 & test$named1 %in% c("POSTN+COMP+ fibroblasts", "COMP-hi fibroblasts"),]
+exclude11c <- small$coord
+
+###################################################################### 
+###################################################################### 
+
+
+exclude.cells <- c(exclude1a, exclude1b, exclude1c, exclude2a, exclude2b, exclude2c, exclude2d, exclude3a, exclude3b, 
+                   exclude3c, exclude3d, exclude3e, exclude4a, exclude5a, exclude5b, exclude5c, exclude5d, exclude5e, 
+                   exclude6a,exclude7a, exclude7b, exclude7c, exclude7d,exclude7e, exclude7f, exclude7g, exclude7h, 
+                   exclude7i, exclude7j, exclude8a, exclude9a, exclude9b, exclude9c,exclude9d, 
+                   exclude9e, exclude9f,  exclude9g,exclude10a, exclude10b, exclude10c, exclude10d, exclude10e, 
+                   exclude11a, exclude11b, exclude11c)
+exclude <- subset(all, coordinates %in% exclude.cells)
+exclude$take2 <- "Artefact"
+
+fibrous <- subset(all, coordinates %in% c(fibrin3, fibrin3b))
+fibrous$take2 <- "Fibrin"
+
+clu.cells <- subset(all, coordinates %in% c(CLU4))
+clu.cells$take2 <- "CLU-hi fibroblasts"
+
+lining <- subset(all, coordinates %in% c(LLfibro4, LLfibro4a))
+lining$take2 <- "LL fibroblasts"
+
+vessel <- subset(all, coordinates %in% c(vessel2, sma11a))
+vessel$take2 <- "SMA-hi vessels"
+
+rbcs <- subset(all, coordinates %in% c(rbc2,rbc3,rbcs3a,rbc5,rbc5b,rbc5c,rbc5d,rbc5e,rbc5f,rbcs5g,rbc9a,rbc9b, rbc9c))
+rbcs$take2 <- "RBCs"
+
+lymph <- subset(all, coordinates %in% c(lymphatics8a))
+lymph$take2 <- "Lymphatics"
+
+mus <- subset(all, coordinates %in% c(muscle8a))
+mus$take2 <- "Muscle"
+
+LLmacs <- subset(all, coordinates %in% c(LLmac, LLmac7a, LLmacs10, LLmacs10b, LLmacs10c))
+LLmacs$take2 <- "LL macrophages"
+
+total <- c(exclude$coordinates, fibrous$coordinates, clu.cells$coordinates,  vessel$coordinates, 
+           lining$coordinates, rbcs$coordinates, lymph$coordinates, mus$coordinates, LLmacs$coordinates)
+include <- subset(all, coordinates %in% total, invert=T)
+
+anno <- rbind(include[["take2"]], exclude[["take2"]], fibrous[["take2"]], clu.cells[["take2"]], lining[["take2"]],
+              vessel[["take2"]], rbcs[["take2"]], lymph[["take2"]], mus[["take2"]], LLmacs[["take2"]])  
+all <- AddMetaData(all, anno, col.name="take2")
+
+save(include, exclude, fibrous, clu.cells, lining, vessel, rbcs, lymph, mus, LLmacs, file="2407_full-objects.RData")
+
+###################################################################### 
+###################################################################### 
+
+load(file="/rds/projects/c/croftap-mapjagdata/CellDive/Panel-2-adult/2407_full-objects.RData")
+anno <- rbind(include[["take2"]], exclude[["take2"]], fibrous[["take2"]], clu.cells[["take2"]], lining[["take2"]],
+              vessel[["take2"]], rbcs[["take2"]], lymph[["take2"]], mus[["take2"]], LLmacs[["take2"]])  
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+
+# Finding lymohatics
+Idents(all) <- "take2"
+LP <- subset(all, idents=c("LL fibroblasts"))
+
+LPb <- subset(LP, LYVE1 > 7 & CD68 < 5)
+LPb$take2 <- "Lymphatics"
+LPc <- subset(LP,  LYVE1 > 7 & CD68 < 5, invert=T)
+LPc$take2 <- "LL fibroblasts"
+
+anno <- rbind(LPc[["take2"]], LPb[["take2"]])
+LP <- AddMetaData(LP, anno, col.name="take2")
+table(LP$orig.ident, LP$take2)
+
+#annotate with new splits from clustering
+Idents(all) <- "take2"
+nLL <- subset(all, idents=c("LL fibroblasts"), invert=T)
+#nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], LP[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+Idents(all) <- "take2"
+VL <- subset(all, idents=c("SMA-hi vessels"))
+
+VlnPlot(VL, features=c("FABP4", "LYVE1", "SMA", "PDPN", "CD68", "COMP"), pt.size=0)
+
+VLb <- subset(VL, LYVE1 > 6.5 & COL4A1 > 7.8 & POSTN > 8.5 & PDPN <= 5.5)
+VLb$take2 <- "Lymphatics"
+VLc <- subset(VL, LYVE1 > 6.5 & COL4A1 > 7.8 & POSTN > 8.5 & PDPN <= 5.5, invert=T)
+VLc$take2 <- "SMA-hi vessels"
+
+anno <- rbind(VLc[["take2"]], VLb[["take2"]])
+VL <- AddMetaData(VL, anno, col.name="take2")
+table(VL$orig.ident, VL$take2)
+
+#annotate with new splits from clustering
+Idents(all) <- "take2"
+nLL <- subset(all, idents=c("SMA-hi vessels"), invert=T)
+#nLL$take3 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], VL[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+###################################################################### 
+###################################################################### 
+
+#annotate with new splits from clustering
+Idents(all) <- "take2"
+nLL <- subset(all, idents=c("SMA-hi vessels", "LL fibroblasts"), invert=T)
+anno <- rbind(nLL[["take2"]], VL[["take2"]], LP[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+save(nLL, LP, VL, file="objects3")
+
+
+###################################################################### 
+###################################################################### 
+
+#For the Visium paper
+
+Idents(all) <- "take2"
+all <- RenameIdents(all, "COMP-hi fibroblasts"="COMP-Artefact", "POSTN+COMP+ fibroblasts"="COMP-Artefact")
+all$take2 <- all@active.ident
+
+save(all, file="2407-panel2-object")
+
+###################################################################### 
+###################################################################### 
+
+load(file="objects3")
+anno <- rbind(nLL[["take2"]], VL[["take2"]], LP[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+
+###################################################################### 
+###################################################################### 
+
+Idents(all) <- "take2"
+CH <- subset(all, idents=c("COMP-hi fibroblasts"))
+
+Idents(CH) <- "orig.ident"
+VlnPlot(CH, features=c("CLU", "LYVE1", "SMA", "PDPN", "CD68", "COMP"), pt.size=0)
+
+CH <-FindNeighbors(CH, dims = 1:21, reduction= "harmony", assay="SCT")
+CH <-FindClusters(CH, resolution = c(0.1), graph.name="SCT_snn")
+table(CH$orig.ident, CH@active.ident)
+
+Idents(CH) <- "SCT_snn_res.0.1"
+CH <- RenameIdents(CH, "0"="Sparse cells", "1"="Adipose", "2"="Artefact", "3"="Sparse cells", "4"="Collagen-dense region", "5"="Artefact", "6"="Artefact", "7"="Artefact")
+CH$take2 <- CH@active.ident
+
+#annotate with new splits from clustering
+Idents(all) <- "take2"
+nLL <- subset(all, idents="COMP-hi fibroblasts", invert=T)
+#nLL$take2 <- nLL$SCT_snn_res.0.16
+anno <- rbind(nLL[["take2"]], CH[["take2"]])
+all <- AddMetaData(all, anno, col.name="take2")
+
+save(nLL, CH, file="objects4")
+
+
+###################################################################### 
+###################################################################### 
+
+
+
+save(all, file="2407-panel2-object-2")
+
+###################################################################### 
+###################################################################### 
+
+
+gen2 <- c("SMA","COL4A1","CD146","COL6A1","DKK3", "COL3A1","COMP","FABP4","COL1","POSTN","SPARC", "MMP3", "PDPN","LYVE1", 
+          "CD68",  "CD3", "MCT","CD20","CD15","CLU", "APOD")
+
+Idents(all) <- "take2"
+all <- RenameIdents(all, "COL4+ fibroblasts"="RBCs", "Low-staining cells"="COL1-hi fibroblasts", 
+                    "LYVE1+ Macrophages"="LYVE1+ macrophages", "Macrophages"="SL macrophages", 
+                    "COL3-hi fibroblasts" = "SPARC-hi fibroblasts","Small vessels"="SMA-low vessels",
+                    "POSTN+COMP+ fibroblasts"="Collagen-dense region")
+all$take2 <- all@active.ident
+
+DefaultAssay(all) <- "SCT"
+Idents(all) <- "take2"
+DotPlot(all, features =gen2, cluster.idents = T) & formplot
+
+iden <- unique(all$take2)
+iden <- iden[grep("Artefact|RBCs", iden, invert=T)]
+Idents(all) <- "take2"
+dotp <- subset(all, idents=iden)
+DotPlot(dotp, features =gen2, cluster.idents = T) & formplot
+
+
+
+# remove OA
+Idents(all) <- "orig.ident"
+all <- subset(all, idents=c("146", "149"), invert=T)
+
+
+iden <- unique(all$take2)
+iden2 <- c("B/T aggregates", "T cells")
+iden3 <- as.character(iden[grep("LL", iden)])
+iden4  <- c("SL macrophages", "LYVE1+ macrophages") 
+iden5  <- as.character(iden[grep("POSTN-hi", iden)]) 
+iden5c  <- as.character(iden[grep("SPARC", iden)]) 
+iden5d  <- as.character(iden[grep("COL6", iden)]) 
+iden5e  <- as.character(iden[grep("COL1", iden)]) 
+iden5f  <- as.character(iden[grep("CLU", iden)]) 
+iden6 <- as.character(iden[grep("vess|Lymph", iden)]) 
+iden7 <- as.character(iden[grep("Mast", iden)]) 
+iden8 <- c("Adipose", "Muscle", "Fibrin")
+iden9 <- as.character(iden[grep("SMA-hi|RBCs|Collagen|Sparse", iden)]) 
+
+orderclust <- unique(c(iden2, iden3,iden4,iden6,iden5,iden5c,iden5d, iden5e, iden5f,iden7,iden8, iden9))
+
+Idents(all) <- "take2"
+dotp <- subset(all, idents="Artefact", invert=T)
+levels(dotp) <- rev(orderclust)
+
+gen2 <- c("CD20", "CD3", "PDPN", "MMP3", "COL3A1", "CD68", "LYVE1", "COL4A1", "SMA", "DKK3", "CD146", 
+          "POSTN",  "SPARC","COL6A1", "COL1","COMP", "CLU",  "MCT", "CD15", "FABP4", "APOD")
+ 
+DotPlot(dotp, features =gen2) & formplot
+
+incl <- iden[grep("RBCs|SMA-hi cells|Sparse|Collagen-den", iden, invert=T)]
+DotPlot(dotp, features =gen2, idents=incl) & formplot
+
+
+# Subset to only include relevant samples
+Idents(all) <- "orig.ident"
+all <- subset(all, idents=c("115", "127", "031", "195", "020", "240"))
+
+
+###################################################################### 
+###################################################################### 
+
+# create object containing missing cells
+# make seperate objects of coordinates
+
+data_x_y -> data_x_y_2
+load(file="2407_all-coordinates.RData")
+
+for (i in 1:length(pt)) {
+  data_x_y[[i]]$coord <- paste0(data_x_y[[i]]$Centroid.X.µm, data_x_y[[i]]$Centroid.Y.µm)
+  data_x_y[[i]] <- data_x_y[[i]] %>% filter(!(coord %in% data_x_y_2[[i]]$coord)) 
+  data_x_y[[i]]$named1 <- "Artefact"
+}
+
+data_x_y -> missing.coord
+data_x_y_2 -> data_x_y
+
+save(missing.coord, file="2407_Artefact_coordinates.RData")
+
+###################################################################### 
+###################################################################### 
+
+
+
+
+###################################################################### 
+###################################################################### 
+
+
+
+
+names <- names(data_x_y)
+xy_list <- list()
+for (i in 1:length(data_x_y)) {
+  xy_list[[i]] <- data_x_y[[names[[i]]]]
+}
+
+all_meta <- all@meta.data
+s_obj_meta <- list()
+ggplot_ls <- list()
+
+for (i in 1:length(pt)) {
+  s_obj_meta[[i]] <- all_meta[all_meta$orig.ident == names[[i]],];
+  xy_list[[i]]$named1 <- s_obj_meta[[i]]$take2;
+  test <- rbind(missing.coord[[i]], xy_list[[i]])
+  ggplot_ls[[i]] <- ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+    geom_point(size=0.4)+theme_classic()+scale_color_manual(values = group.color) &  scale_y_reverse() &
+    guides(colour = guide_legend(override.aes = list(size=5)));
+  print(ggplot_ls[[i]])
+}
+
+for (i in 1:length(names)) {
+  s_obj_meta[[i]] <- all_meta[all_meta$orig.ident == names[[i]],];
+  xy_list[[i]]$named1 <- s_obj_meta[[i]]$take2;
+  test <- rbind(missing.coord[[i]], xy_list[[i]])
+  ggplot_ls[[i]] <- ggplot(test, aes(x = Centroid.X.µm, y = Centroid.Y.µm, color=named1)) +
+    geom_point(size=0.2)+theme_classic()+scale_color_manual(values = bright) &
+    NoLegend() & thin
+}
+
+library(grid)
+library(gridExtra)
+grid.arrange(grobs = ggplot_ls, ncol=4)  
+
+################################################
+################################################
+################################################
+################################################
+
+library(data.table)
+library(splitstackshape)
+library(ggpubr)
+library(rstatix)
+library(DescTools)
+library(textshape)
+library(dplyr)
+library(tidyverse)
+library(ComplexHeatmap)
+
+# see NN-run R1.sh file for proximity code metho
+
+#run on cluster
+load(file="/rds/projects/c/croftap-mapjagdata/CellDive/Panel-2-adult/matrix-3.RData")
+
+plt_df <- coloc_res_coarse %>%
+  subset(pval < 0.05) %>%
+  dplyr::select(index_type, type, zscore) %>%
+  spread(type, zscore, fill = 0) %>%
+  column_to_rownames('index_type') %>%
+  as.matrix
+
+
+#remove Artefact
+
+plt_df %>%
+  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, cluster_columns = T, cluster_rows = T)
+
+plt_df[-c(2,16,7,14,18),-c(2,16,7,14,18)] %>%
+  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, cluster_columns = T, cluster_rows = T)
+
+##################################################
+##################################################
+
+#make matrix symmetrical 
+plt_df_use <- plt_df[-c(2,7,8,14,16,18),-c(2,7,8,14,16,18)] 
+
+plt_df_use <- plt_df[-c(2,16,7,14,18),-c(2,16,7,14,18)] 
+plt_df_use2 <- plt_df_use+t(plt_df_use)
+plt_df_use2 %>%
+  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, cluster_columns = T, cluster_rows = T)
+
+
+##################################################
+##################################################
+
+plt_df[c(3,5,6,15,19,20,23),c(3,5,6,15,19,20,23)] %>%
+  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, cluster_columns = T, cluster_rows = T)
+
+plt_use <- plt_df[c(3,5,6,15,19,20,23),c(3,5,6,15,19,20,23)]
+plt_use <- plt_use + t(plt_use)
+plt_use %>%
+  Heatmap(col = circlize::colorRamp2(c(-20, 0, 20), c('blue', 'white', 'red')), border = T, 
+          cluster_columns = T, cluster_rows = T) 
+
+
+##################################################
+##################################################
+
+# extract highest colocalising values
+# Convert the matrix into a data frame
+df <- as.data.frame(plt_df)  # Replace 'matrix_values' with the name of your matrix
+
+# Reshape the data frame into a long format
+df_long <- stack(df)
+
+# Order the data frame by values in descending order
+df_ordered <- df_long[order(-df_long$values), ]
+
+# Select the top 5 rows
+top_5 <- head(df_ordered, 30)
+
+# Print the top 5 values and their corresponding row/column labels
+print(top_5)
+
+
+
+
+##################################################
+##################################################
+##################################################
+##################################################
+##################################################
+##################################################
+
+
+
+
 
