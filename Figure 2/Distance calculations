@@ -1,0 +1,1621 @@
+#cell coords
+coords_slice1<-merging@images[["slice1"]]@coordinates
+coords_slice1 <- subset(coords_slice1, select = c(imagerow, imagecol))
+S1A_vascular <- subset(S1A, Annotations == "Vascular")
+coords_slice1_vasc <- coords_slice1[(rownames(coords_slice1) %in% rownames(S1A_vascular)),]
+
+
+#spot_coords_slice1<-merging@images[["slice1"]]@coordinates
+#spot_coords_slice1$low_res_imagerow <- spot_coords_slice1$imagerow * #merging@images[["slice1"]]@scale.factors[["lowres"]]
+#spot_coords_slice1$low_res_imagecol <- spot_coords_slice1$imagecol * #merging@images[["slice1"]]@scale.factors[["lowres"]]
+
+coords_slice1$dist1 <- NA
+coords_slice1$dist.x1 <- NA
+coords_slice1$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1_vasc[, 2:1]), pt=as.numeric(coords_slice1[spot, c( "imagecol", "imagerow")]))
+  coords_slice1$dist1[spot] <- min(dists)
+  coords_slice1$dist.x1[spot] <- coords_slice1_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1$dist.y1[spot] <- coords_slice1_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+
+Slide1SampleA<-AddMetaData(Slide1SampleA, S1A)
+
+Slide1SampleA<-AddMetaData(Slide1SampleA, coords_slice1)
+SpatialFeaturePlot(Slide1SampleA, "dist1", images = "slice1")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide1SampleA, "Annotations", images = "slice1")+ theme(legend.position = 'none')
+
+
+#cell coords
+coords_slice1.1<-merging@images[["slice1.1"]]@coordinates
+coords_slice1.1 <- subset(coords_slice1.1, select = c(imagerow, imagecol))
+S1B_vascular <- subset(S1B, Annotations == "Vascular")
+coords_slice1.1_vasc <- coords_slice1.1[(rownames(coords_slice1.1) %in% rownames(S1B_vascular)),]
+
+coords_slice1.1$dist1 <- NA
+coords_slice1.1$dist.x1 <- NA
+coords_slice1.1$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.1)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.1_vasc[, 2:1]), pt=as.numeric(coords_slice1.1[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.1$dist1[spot] <- min(dists)
+  coords_slice1.1$dist.x1[spot] <- coords_slice1.1_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.1$dist.y1[spot] <- coords_slice1.1_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide1SampleB<-AddMetaData(Slide1SampleB, coords_slice1.1)
+SpatialFeaturePlot(Slide1SampleB, "dist1", images = "slice1.1")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide1SampleB, "Annotations", images = "slice1.1")+ theme(legend.position = 'none')
+
+
+coords_slice1.2<-merging@images[["slice1.2"]]@coordinates
+coords_slice1.2 <- subset(coords_slice1.2, select = c(imagerow, imagecol))
+S2A_vascular <- subset(S2A, Annotations == "Vascular")
+coords_slice1.2_vasc <- coords_slice1.2[(rownames(coords_slice1.2) %in% rownames(S2A_vascular)),]
+
+coords_slice1.2$dist1 <- NA
+coords_slice1.2$dist.x1 <- NA
+coords_slice1.2$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.2)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.2_vasc[, 2:1]), pt=as.numeric(coords_slice1.2[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.2$dist1[spot] <- min(dists)
+  coords_slice1.2$dist.x1[spot] <- coords_slice1.2_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.2$dist.y1[spot] <- coords_slice1.2_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide2SampleA<-AddMetaData(Slide2SampleA, coords_slice1.2)
+SpatialFeaturePlot(Slide2SampleA, "dist1", images = "slice1.2")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide2SampleA, "Annotations", images = "slice1.2")
+
+coords_slice1.3<-merging@images[["slice1.3"]]@coordinates
+coords_slice1.3 <- subset(coords_slice1.3, select = c(imagerow, imagecol))
+S2C_vascular <- subset(S2C, Annotations == "Vascular")
+coords_slice1.3_vasc <- coords_slice1.3[(rownames(coords_slice1.3) %in% rownames(S2C_vascular)),]
+
+coords_slice1.3$dist1 <- NA
+coords_slice1.3$dist.x1 <- NA
+coords_slice1.3$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.3)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.3_vasc[, 2:1]), pt=as.numeric(coords_slice1.3[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.3$dist1[spot] <- min(dists)
+  coords_slice1.3$dist.x1[spot] <- coords_slice1.3_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.3$dist.y1[spot] <- coords_slice1.3_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide2SampleC<-AddMetaData(Slide2SampleC, coords_slice1.3)
+SpatialFeaturePlot(Slide2SampleC, "dist1", images = "slice1.3")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide2SampleC, "Annotations", images = "slice1.3")
+
+coords_slice1.4<-merging@images[["slice1.4"]]@coordinates
+coords_slice1.4 <- subset(coords_slice1.4, select = c(imagerow, imagecol))
+S2D_vascular <- subset(S2D, Annotations == "Vascular")
+coords_slice1.4_vasc <- coords_slice1.4[(rownames(coords_slice1.4) %in% rownames(S2D_vascular)),]
+
+coords_slice1.4$dist1 <- NA
+coords_slice1.4$dist.x1 <- NA
+coords_slice1.4$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.4)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.4_vasc[, 2:1]), pt=as.numeric(coords_slice1.4[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.4$dist1[spot] <- min(dists)
+  coords_slice1.4$dist.x1[spot] <- coords_slice1.4_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.4$dist.y1[spot] <- coords_slice1.4_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide2SampleD<-AddMetaData(Slide2SampleD, coords_slice1.4)
+SpatialFeaturePlot(Slide2SampleD, "dist1", images = "slice1.4")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide2SampleD, "Annotations", images = "slice1.4")
+
+coords_slice1.5<-merging@images[["slice1.5"]]@coordinates
+coords_slice1.5 <- subset(coords_slice1.5, select = c(imagerow, imagecol))
+S3A_vascular <- subset(S3A, Annotations == "Vascular")
+coords_slice1.5_vasc <- coords_slice1.5[(rownames(coords_slice1.5) %in% rownames(S3A_vascular)),]
+
+coords_slice1.5$dist1 <- NA
+coords_slice1.5$dist.x1 <- NA
+coords_slice1.5$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.5)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.5_vasc[, 2:1]), pt=as.numeric(coords_slice1.5[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.5$dist1[spot] <- min(dists)
+  coords_slice1.5$dist.x1[spot] <- coords_slice1.5_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.5$dist.y1[spot] <- coords_slice1.5_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide3SampleA<-AddMetaData(Slide3SampleA, coords_slice1.5)
+SpatialFeaturePlot(Slide3SampleA, "dist1", images = "slice1.5")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide3SampleA, "Annotations", images = "slice1.5")
+
+coords_slice1.6<-merging@images[["slice1.6"]]@coordinates
+coords_slice1.6 <- subset(coords_slice1.6, select = c(imagerow, imagecol))
+S3B_vascular <- subset(S3B, Annotations == "Vascular")
+coords_slice1.6_vasc <- coords_slice1.6[(rownames(coords_slice1.6) %in% rownames(S3B_vascular)),]
+
+coords_slice1.6$dist1 <- NA
+coords_slice1.6$dist.x1 <- NA
+coords_slice1.6$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.6)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.6_vasc[, 2:1]), pt=as.numeric(coords_slice1.6[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.6$dist1[spot] <- min(dists)
+  coords_slice1.6$dist.x1[spot] <- coords_slice1.6_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.6$dist.y1[spot] <- coords_slice1.6_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide3SampleB<-AddMetaData(Slide3SampleB, coords_slice1.6)
+SpatialFeaturePlot(Slide3SampleB, "dist1", images = "slice1.6")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide3SampleB, "Annotations", images = "slice1.6")
+
+coords_slice1.7<-merging@images[["slice1.7"]]@coordinates
+coords_slice1.7 <- subset(coords_slice1.7, select = c(imagerow, imagecol))
+S3C_vascular <- subset(S3C, Annotations == "Vascular")
+coords_slice1.7_vasc <- coords_slice1.7[(rownames(coords_slice1.7) %in% rownames(S3C_vascular)),]
+
+coords_slice1.7$dist1 <- NA
+coords_slice1.7$dist.x1 <- NA
+coords_slice1.7$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.7)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.7_vasc[, 2:1]), pt=as.numeric(coords_slice1.7[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.7$dist1[spot] <- min(dists)
+  coords_slice1.7$dist.x1[spot] <- coords_slice1.7_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.7$dist.y1[spot] <- coords_slice1.7_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide3SampleC<-AddMetaData(Slide3SampleC, coords_slice1.7)
+SpatialFeaturePlot(Slide3SampleC, "dist1", images = "slice1.7")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide3SampleC, "Annotations", images = "slice1.7")
+
+coords_slice1.8<-merging@images[["slice1.8"]]@coordinates
+coords_slice1.8 <- subset(coords_slice1.8, select = c(imagerow, imagecol))
+S3D_vascular <- subset(S3D, Annotations == "Vascular")
+coords_slice1.8_vasc <- coords_slice1.8[(rownames(coords_slice1.8) %in% rownames(S3D_vascular)),]
+
+coords_slice1.8$dist1 <- NA
+coords_slice1.8$dist.x1 <- NA
+coords_slice1.8$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.8)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.8_vasc[, 2:1]), pt=as.numeric(coords_slice1.8[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.8$dist1[spot] <- min(dists)
+  coords_slice1.8$dist.x1[spot] <- coords_slice1.8_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.8$dist.y1[spot] <- coords_slice1.8_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide3SampleD<-AddMetaData(Slide3SampleD, coords_slice1.8)
+SpatialFeaturePlot(Slide3SampleD, "dist1", images = "slice1.8")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide3SampleD, "Annotations", images = "slice1.8")
+
+coords_slice1.9<-merging@images[["slice1.9"]]@coordinates
+coords_slice1.9 <- subset(coords_slice1.9, select = c(imagerow, imagecol))
+S4A_vascular <- subset(S4A, Annotations == "Vascular")
+coords_slice1.9_vasc <- coords_slice1.9[(rownames(coords_slice1.9) %in% rownames(S4A_vascular)),]
+
+coords_slice1.9$dist1 <- NA
+coords_slice1.9$dist.x1 <- NA
+coords_slice1.9$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.9)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.9_vasc[, 2:1]), pt=as.numeric(coords_slice1.9[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.9$dist1[spot] <- min(dists)
+  coords_slice1.9$dist.x1[spot] <- coords_slice1.9_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.9$dist.y1[spot] <- coords_slice1.9_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide4SampleA<-AddMetaData(Slide4SampleA, coords_slice1.9)
+SpatialFeaturePlot(Slide4SampleA, "dist1", images = "slice1.9")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide4SampleA, "Annotations", images = "slice1.9")
+
+coords_slice1.10<-merging@images[["slice1.10"]]@coordinates
+coords_slice1.10 <- subset(coords_slice1.10, select = c(imagerow, imagecol))
+S4B_vascular <- subset(S4B, Annotations == "Vascular")
+coords_slice1.10_vasc <- coords_slice1.10[(rownames(coords_slice1.10) %in% rownames(S4B_vascular)),]
+
+coords_slice1.10$dist1 <- NA
+coords_slice1.10$dist.x1 <- NA
+coords_slice1.10$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.10)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.10_vasc[, 2:1]), pt=as.numeric(coords_slice1.10[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.10$dist1[spot] <- min(dists)
+  coords_slice1.10$dist.x1[spot] <- coords_slice1.10_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.10$dist.y1[spot] <- coords_slice1.10_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide4SampleB<-AddMetaData(Slide4SampleB, coords_slice1.10)
+SpatialFeaturePlot(Slide4SampleB, "dist1", images = "slice1.10")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide4SampleB, "Annotations", images = "slice1.10")
+
+coords_slice1.11<-merging@images[["slice1.11"]]@coordinates
+coords_slice1.11 <- subset(coords_slice1.11, select = c(imagerow, imagecol))
+S4C_vascular <- subset(S4C, Annotations == "Vascular")
+coords_slice1.11_vasc <- coords_slice1.11[(rownames(coords_slice1.11) %in% rownames(S4C_vascular)),]
+
+coords_slice1.11$dist1 <- NA
+coords_slice1.11$dist.x1 <- NA
+coords_slice1.11$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.11)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.11_vasc[, 2:1]), pt=as.numeric(coords_slice1.11[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.11$dist1[spot] <- min(dists)
+  coords_slice1.11$dist.x1[spot] <- coords_slice1.11_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.11$dist.y1[spot] <- coords_slice1.11_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide4SampleC<-AddMetaData(Slide4SampleC, coords_slice1.11)
+SpatialFeaturePlot(Slide4SampleC, "dist1", images = "slice1.11")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide4SampleC, "Annotations", images = "slice1.11")
+
+coords_slice1.12<-merging@images[["slice1.12"]]@coordinates
+coords_slice1.12 <- subset(coords_slice1.12, select = c(imagerow, imagecol))
+S4D_vascular <- subset(S4D, Annotations == "Vascular")
+coords_slice1.12_vasc <- coords_slice1.12[(rownames(coords_slice1.12) %in% rownames(S4D_vascular)),]
+
+coords_slice1.12$dist1 <- NA
+coords_slice1.12$dist.x1 <- NA
+coords_slice1.12$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.12)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.12_vasc[, 2:1]), pt=as.numeric(coords_slice1.12[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.12$dist1[spot] <- min(dists)
+  coords_slice1.12$dist.x1[spot] <- coords_slice1.12_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.12$dist.y1[spot] <- coords_slice1.12_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide4SampleD<-AddMetaData(Slide4SampleD, coords_slice1.12)
+SpatialFeaturePlot(Slide4SampleD, "dist1", images = "slice1.12")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide4SampleD, "Annotations", images = "slice1.12")
+
+coords_slice1.13<-merging@images[["slice1.13"]]@coordinates
+coords_slice1.13 <- subset(coords_slice1.13, select = c(imagerow, imagecol))
+S5A_vascular <- subset(S5A, Annotations == "Vascular")
+coords_slice1.13_vasc <- coords_slice1.13[(rownames(coords_slice1.13) %in% rownames(S5A_vascular)),]
+
+coords_slice1.13$dist1 <- NA
+coords_slice1.13$dist.x1 <- NA
+coords_slice1.13$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.13)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.13_vasc[, 2:1]), pt=as.numeric(coords_slice1.13[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.13$dist1[spot] <- min(dists)
+  coords_slice1.13$dist.x1[spot] <- coords_slice1.13_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.13$dist.y1[spot] <- coords_slice1.13_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide5SampleA<-AddMetaData(Slide5SampleA, coords_slice1.13)
+SpatialFeaturePlot(Slide5SampleA, "dist1", images = "slice1.13")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide5SampleA, "Annotations", images = "slice1.13")
+
+coords_slice1.14<-merging@images[["slice1.14"]]@coordinates
+coords_slice1.14 <- subset(coords_slice1.14, select = c(imagerow, imagecol))
+S5B_vascular <- subset(S5B, Annotations == "Vascular")
+coords_slice1.14_vasc <- coords_slice1.14[(rownames(coords_slice1.14) %in% rownames(S5B_vascular)),]
+
+coords_slice1.14$dist1 <- NA
+coords_slice1.14$dist.x1 <- NA
+coords_slice1.14$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.14)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.14_vasc[, 2:1]), pt=as.numeric(coords_slice1.14[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.14$dist1[spot] <- min(dists)
+  coords_slice1.14$dist.x1[spot] <- coords_slice1.14_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.14$dist.y1[spot] <- coords_slice1.14_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide5SampleB<-AddMetaData(Slide5SampleB, coords_slice1.14)
+SpatialFeaturePlot(Slide5SampleB, "dist1", images = "slice1.14")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide5SampleB, "Annotations", images = "slice1.14")
+
+coords_slice1.15<-merging@images[["slice1.15"]]@coordinates
+coords_slice1.15 <- subset(coords_slice1.15, select = c(imagerow, imagecol))
+S5C_vascular <- subset(S5C, Annotations == "Vascular")
+coords_slice1.15_vasc <- coords_slice1.15[(rownames(coords_slice1.15) %in% rownames(S5C_vascular)),]
+
+coords_slice1.15$dist1 <- NA
+coords_slice1.15$dist.x1 <- NA
+coords_slice1.15$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.15)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.15_vasc[, 2:1]), pt=as.numeric(coords_slice1.15[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.15$dist1[spot] <- min(dists)
+  coords_slice1.15$dist.x1[spot] <- coords_slice1.15_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.15$dist.y1[spot] <- coords_slice1.15_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide5SampleC<-AddMetaData(Slide5SampleC, coords_slice1.15)
+SpatialFeaturePlot(Slide5SampleC, "dist1", images = "slice1.15")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide5SampleC, "Annotations", images = "slice1.15")
+
+coords_slice1.16<-merging@images[["slice1.16"]]@coordinates
+coords_slice1.16 <- subset(coords_slice1.16, select = c(imagerow, imagecol))
+S5D_vascular <- subset(S5D, Annotations == "Vascular")
+coords_slice1.16_vasc <- coords_slice1.16[(rownames(coords_slice1.16) %in% rownames(S5D_vascular)),]
+
+coords_slice1.16$dist1 <- NA
+coords_slice1.16$dist.x1 <- NA
+coords_slice1.16$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.16)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.16_vasc[, 2:1]), pt=as.numeric(coords_slice1.16[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.16$dist1[spot] <- min(dists)
+  coords_slice1.16$dist.x1[spot] <- coords_slice1.16_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.16$dist.y1[spot] <- coords_slice1.16_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide5SampleD<-AddMetaData(Slide5SampleD, coords_slice1.16)
+SpatialFeaturePlot(Slide5SampleD, "dist1", images = "slice1.16")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide5SampleD, "Annotations", images = "slice1.16")
+
+coords_slice1.17<-merging@images[["slice1.17"]]@coordinates
+coords_slice1.17 <- subset(coords_slice1.17, select = c(imagerow, imagecol))
+S6A_vascular <- subset(S6A, Annotations == "Vascular")
+coords_slice1.17_vasc <- coords_slice1.17[(rownames(coords_slice1.17) %in% rownames(S6A_vascular)),]
+
+coords_slice1.17$dist1 <- NA
+coords_slice1.17$dist.x1 <- NA
+coords_slice1.17$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.17)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.17_vasc[, 2:1]), pt=as.numeric(coords_slice1.17[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.17$dist1[spot] <- min(dists)
+  coords_slice1.17$dist.x1[spot] <- coords_slice1.17_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.17$dist.y1[spot] <- coords_slice1.17_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide6SampleA<-AddMetaData(Slide6SampleA, coords_slice1.17)
+SpatialFeaturePlot(Slide6SampleA, "dist1", images = "slice1.17")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide6SampleA, "Annotations", images = "slice1.17")
+
+coords_slice1.18<-merging@images[["slice1.18"]]@coordinates
+coords_slice1.18 <- subset(coords_slice1.18, select = c(imagerow, imagecol))
+S6B_vascular <- subset(S6B, Annotations == "Vascular")
+coords_slice1.18_vasc <- coords_slice1.18[(rownames(coords_slice1.18) %in% rownames(S6B_vascular)),]
+
+coords_slice1.18$dist1 <- NA
+coords_slice1.18$dist.x1 <- NA
+coords_slice1.18$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.18)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.18_vasc[, 2:1]), pt=as.numeric(coords_slice1.18[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.18$dist1[spot] <- min(dists)
+  coords_slice1.18$dist.x1[spot] <- coords_slice1.18_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.18$dist.y1[spot] <- coords_slice1.18_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide6SampleB<-AddMetaData(Slide6SampleB, coords_slice1.18)
+SpatialFeaturePlot(Slide6SampleB, "dist1", images = "slice1.18")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide6SampleB, "Annotations", images = "slice1.18")
+
+coords_slice1.19<-merging@images[["slice1.19"]]@coordinates
+coords_slice1.19 <- subset(coords_slice1.19, select = c(imagerow, imagecol))
+S6C_vascular <- subset(S6C, Annotations == "Vascular")
+coords_slice1.19_vasc <- coords_slice1.19[(rownames(coords_slice1.19) %in% rownames(S6C_vascular)),]
+
+coords_slice1.19$dist1 <- NA
+coords_slice1.19$dist.x1 <- NA
+coords_slice1.19$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.19)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.19_vasc[, 2:1]), pt=as.numeric(coords_slice1.19[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.19$dist1[spot] <- min(dists)
+  coords_slice1.19$dist.x1[spot] <- coords_slice1.19_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.19$dist.y1[spot] <- coords_slice1.19_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide6SampleC<-AddMetaData(Slide6SampleC, coords_slice1.19)
+SpatialFeaturePlot(Slide6SampleC, "dist1", images = "slice1.19")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide6SampleC, "Annotations", images = "slice1.19")
+
+coords_slice1.20<-merging@images[["slice1.20"]]@coordinates
+coords_slice1.20 <- subset(coords_slice1.20, select = c(imagerow, imagecol))
+S6D_vascular <- subset(S6D, Annotations == "Vascular")
+coords_slice1.20_vasc <- coords_slice1.20[(rownames(coords_slice1.20) %in% rownames(S6D_vascular)),]
+
+coords_slice1.20$dist1 <- NA
+coords_slice1.20$dist.x1 <- NA
+coords_slice1.20$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.20)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.20_vasc[, 2:1]), pt=as.numeric(coords_slice1.20[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.20$dist1[spot] <- min(dists)
+  coords_slice1.20$dist.x1[spot] <- coords_slice1.20_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.20$dist.y1[spot] <- coords_slice1.20_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide6SampleD<-AddMetaData(Slide6SampleD, coords_slice1.20)
+SpatialFeaturePlot(Slide6SampleD, "dist1", images = "slice1.20")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide6SampleD, "Annotations", images = "slice1.20")
+
+
+coords_slice1.21<-merging@images[["slice1.21"]]@coordinates
+coords_slice1.21 <- subset(coords_slice1.21, select = c(imagerow, imagecol))
+S7A_vascular <- subset(S7A, Annotations == "Vascular")
+coords_slice1.21_vasc <- coords_slice1.21[(rownames(coords_slice1.21) %in% rownames(S7A_vascular)),]
+
+coords_slice1.21$dist1 <- NA
+coords_slice1.21$dist.x1 <- NA
+coords_slice1.21$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.21)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.21_vasc[, 2:1]), pt=as.numeric(coords_slice1.21[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.21$dist1[spot] <- min(dists)
+  coords_slice1.21$dist.x1[spot] <- coords_slice1.21_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.21$dist.y1[spot] <- coords_slice1.21_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide7SampleA<-AddMetaData(Slide7SampleA, coords_slice1.21)
+SpatialFeaturePlot(Slide7SampleA, "dist1", images = "slice1.21")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide7SampleA, "Annotations", images = "slice1.21")
+
+coords_slice1.22<-merging@images[["slice1.22"]]@coordinates
+coords_slice1.22 <- subset(coords_slice1.22, select = c(imagerow, imagecol))
+S7B_vascular <- subset(S7B, Annotations == "Vascular")
+coords_slice1.22_vasc <- coords_slice1.22[(rownames(coords_slice1.22) %in% rownames(S7B_vascular)),]
+
+coords_slice1.22$dist1 <- NA
+coords_slice1.22$dist.x1 <- NA
+coords_slice1.22$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.22)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.22_vasc[, 2:1]), pt=as.numeric(coords_slice1.22[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.22$dist1[spot] <- min(dists)
+  coords_slice1.22$dist.x1[spot] <- coords_slice1.22_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.22$dist.y1[spot] <- coords_slice1.22_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide7SampleB<-AddMetaData(Slide7SampleB, coords_slice1.22)
+SpatialFeaturePlot(Slide7SampleB, "dist1", images = "slice1.22")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide7SampleB, "Annotations", images = "slice1.22")
+
+coords_slice1.23<-merging@images[["slice1.23"]]@coordinates
+coords_slice1.23 <- subset(coords_slice1.23, select = c(imagerow, imagecol))
+S7C_vascular <- subset(S7C, Annotations == "Vascular")
+coords_slice1.23_vasc <- coords_slice1.23[(rownames(coords_slice1.23) %in% rownames(S7C_vascular)),]
+
+coords_slice1.23$dist1 <- NA
+coords_slice1.23$dist.x1 <- NA
+coords_slice1.23$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.23)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.23_vasc[, 2:1]), pt=as.numeric(coords_slice1.23[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.23$dist1[spot] <- min(dists)
+  coords_slice1.23$dist.x1[spot] <- coords_slice1.23_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.23$dist.y1[spot] <- coords_slice1.23_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide7SampleC<-AddMetaData(Slide7SampleC, coords_slice1.23)
+SpatialFeaturePlot(Slide7SampleC, "dist1", images = "slice1.23")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide7SampleC, "Annotations", images = "slice1.23")
+
+coords_slice1.24<-merging@images[["slice1.24"]]@coordinates
+coords_slice1.24 <- subset(coords_slice1.24, select = c(imagerow, imagecol))
+S7D_vascular <- subset(S7D, Annotations == "Vascular")
+coords_slice1.24_vasc <- coords_slice1.24[(rownames(coords_slice1.24) %in% rownames(S7D_vascular)),]
+
+coords_slice1.24$dist1 <- NA
+coords_slice1.24$dist.x1 <- NA
+coords_slice1.24$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.24)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.24_vasc[, 2:1]), pt=as.numeric(coords_slice1.24[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.24$dist1[spot] <- min(dists)
+  coords_slice1.24$dist.x1[spot] <- coords_slice1.24_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.24$dist.y1[spot] <- coords_slice1.24_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide7SampleD<-AddMetaData(Slide7SampleD, coords_slice1.24)
+SpatialFeaturePlot(Slide7SampleD, "dist1", images = "slice1.24")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide7SampleD, "Annotations", images = "slice1.24")
+
+coords_slice1.25<-merging@images[["slice1.25"]]@coordinates
+coords_slice1.25 <- subset(coords_slice1.25, select = c(imagerow, imagecol))
+S8A_vascular <- subset(S8A, Annotations == "Vascular")
+coords_slice1.25_vasc <- coords_slice1.25[(rownames(coords_slice1.25) %in% rownames(S8A_vascular)),]
+
+coords_slice1.25$dist1 <- NA
+coords_slice1.25$dist.x1 <- NA
+coords_slice1.25$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.25)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.25_vasc[, 2:1]), pt=as.numeric(coords_slice1.25[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.25$dist1[spot] <- min(dists)
+  coords_slice1.25$dist.x1[spot] <- coords_slice1.25_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.25$dist.y1[spot] <- coords_slice1.25_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide8SampleA<-AddMetaData(Slide8SampleA, coords_slice1.25)
+SpatialFeaturePlot(Slide8SampleA, "dist1", images = "slice1.25")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide8SampleA, "Annotations", images = "slice1.25")
+```
+```{r}
+coords_slice1.26<-merging@images[["slice1.26"]]@coordinates
+coords_slice1.26 <- subset(coords_slice1.26, select = c(imagerow, imagecol))
+S8B_vascular <- subset(S8B, Annotations == "Vascular")
+coords_slice1.26_vasc <- coords_slice1.26[(rownames(coords_slice1.26) %in% rownames(S8B_vascular)),]
+
+coords_slice1.26$dist1 <- NA
+coords_slice1.26$dist.x1 <- NA
+coords_slice1.26$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.26)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.26_vasc[, 2:1]), pt=as.numeric(coords_slice1.26[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.26$dist1[spot] <- min(dists)
+  coords_slice1.26$dist.x1[spot] <- coords_slice1.26_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.26$dist.y1[spot] <- coords_slice1.26_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide8SampleB<-AddMetaData(Slide8SampleB, coords_slice1.26)
+SpatialFeaturePlot(Slide8SampleB, "dist1", images = "slice1.26")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide8SampleB, "Annotations", images = "slice1.26")
+
+
+
+coords_slice1.27<-merging@images[["slice1.27"]]@coordinates
+coords_slice1.27 <- subset(coords_slice1.27, select = c(imagerow, imagecol))
+S8C_vascular <- subset(S8C, Annotations == "Vascular")
+coords_slice1.27_vasc <- coords_slice1.27[(rownames(coords_slice1.27) %in% rownames(S8C_vascular)),]
+
+coords_slice1.27$dist1 <- NA
+coords_slice1.27$dist.x1 <- NA
+coords_slice1.27$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.27)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.27_vasc[, 2:1]), pt=as.numeric(coords_slice1.27[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.27$dist1[spot] <- min(dists)
+  coords_slice1.27$dist.x1[spot] <- coords_slice1.27_vasc[which(dists == min(dists))[1], 1]
+  coords_slice1.27$dist.y1[spot] <- coords_slice1.27_vasc[which(dists == min(dists))[1], 2]
+    
+
+}
+
+Slide8SampleC<-AddMetaData(Slide8SampleC, coords_slice1.27)
+SpatialFeaturePlot(Slide8SampleC, "dist1", images = "slice1.27")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide8SampleC, "Annotations", images = "slice1.27")
+
+
+
+#rind all and add as meta data
+
+all_coords_dist<-rbind(coords_slice1, coords_slice1.1, coords_slice1.2,coords_slice1.3, coords_slice1.4, coords_slice1.5, coords_slice1.6, coords_slice1.7, coords_slice1.8, coords_slice1.9, coords_slice1.10, coords_slice1.11, coords_slice1.12, coords_slice1.13, coords_slice1.14, coords_slice1.15, coords_slice1.16, coords_slice1.17, coords_slice1.18, coords_slice1.19, coords_slice1.20, coords_slice1.21, coords_slice1.22, coords_slice1.23, coords_slice1.24, coords_slice1.25,coords_slice1.26, coords_slice1.27)
+
+
+all_coords_dist <- subset(all_coords_dist, select = c(imagerow, imagecol))
+
+
+all_coords_dist <- subset(all_coords_dist, select = c(imagerow, imagecol))
+write.csv(all_coords_dist, "/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/zone_annotation/steve_data/all_coords.csv")
+
+
+```
+```{r}
+coords_slice1_norm<-coords_slice1
+coords_slice1_norm$dist1<- coords_slice1$dist1/max(coords_slice1$dist1)
+
+coords_slice1.1_norm<-coords_slice1.1
+coords_slice1.1_norm$dist1<- coords_slice1.1$dist1/max(coords_slice1.1$dist1)
+
+coords_slice1.2_norm<-coords_slice1.2
+coords_slice1.2_norm$dist1<- coords_slice1.2$dist1/max(coords_slice1.2$dist1)
+
+coords_slice1.3_norm<-coords_slice1.3
+coords_slice1.3_norm$dist1<- coords_slice1.3$dist1/max(coords_slice1.3$dist1)
+
+coords_slice1.4_norm<-coords_slice1.4
+coords_slice1.4_norm$dist1<- coords_slice1.4$dist1/max(coords_slice1.4$dist1)
+
+coords_slice1.5_norm<-coords_slice1.5
+coords_slice1.5_norm$dist1<- coords_slice1.5$dist1/max(coords_slice1.5$dist1)
+
+coords_slice1.6_norm<-coords_slice1.6
+coords_slice1.6_norm$dist1<- coords_slice1.6$dist1/max(coords_slice1.6$dist1)
+
+coords_slice1.7_norm<-coords_slice1.7
+coords_slice1.7_norm$dist1<- coords_slice1.7$dist1/max(coords_slice1.7$dist1)
+
+coords_slice1.8_norm<-coords_slice1.8
+coords_slice1.8_norm$dist1<- coords_slice1.8$dist1/max(coords_slice1.8$dist1)
+
+coords_slice1.9_norm<-coords_slice1.9
+coords_slice1.9_norm$dist1<- coords_slice1.9$dist1/max(coords_slice1.9$dist1)
+
+coords_slice1.10_norm<-coords_slice1.10
+coords_slice1.10_norm$dist1<- coords_slice1.10$dist1/max(coords_slice1.10$dist1)
+
+coords_slice1.11_norm<-coords_slice1.11
+coords_slice1.11_norm$dist1<- coords_slice1.11$dist1/max(coords_slice1.11$dist1)
+
+coords_slice1.12_norm<-coords_slice1.12
+coords_slice1.12_norm$dist1<- coords_slice1.12$dist1/max(coords_slice1.12$dist1)
+
+coords_slice1.13_norm<-coords_slice1.13
+coords_slice1.13_norm$dist1<- coords_slice1.13$dist1/max(coords_slice1.13$dist1)
+
+coords_slice1.14_norm<-coords_slice1.14
+coords_slice1.14_norm$dist1<- coords_slice1.14$dist1/max(coords_slice1.14$dist1)
+
+coords_slice1.15_norm<-coords_slice1.15
+coords_slice1.15_norm$dist1<- coords_slice1.15$dist1/max(coords_slice1.15$dist1)
+
+coords_slice1.16_norm<-coords_slice1.16
+coords_slice1.16_norm$dist1<- coords_slice1.16$dist1/max(coords_slice1.16$dist1)
+
+coords_slice1.17_norm<-coords_slice1.17
+coords_slice1.17_norm$dist1<- coords_slice1.17$dist1/max(coords_slice1.17$dist1)
+
+coords_slice1.18_norm<-coords_slice1.18
+coords_slice1.18_norm$dist1<- coords_slice1.18$dist1/max(coords_slice1.18$dist1)
+
+coords_slice1.19_norm<-coords_slice1.19
+coords_slice1.19_norm$dist1<- coords_slice1.19$dist1/max(coords_slice1.19$dist1)
+                                                         
+coords_slice1.20_norm<-coords_slice1.20
+coords_slice1.20_norm$dist1<- coords_slice1.20$dist1/max(coords_slice1.20$dist1) 
+
+coords_slice1.21_norm<-coords_slice1.21
+coords_slice1.21_norm$dist1<- coords_slice1.21$dist1/max(coords_slice1.21$dist1)
+
+coords_slice1.22_norm<-coords_slice1.22
+coords_slice1.22_norm$dist1<- coords_slice1.22$dist1/max(coords_slice1.22$dist1)
+
+coords_slice1.23_norm<-coords_slice1.23
+coords_slice1.23_norm$dist1<- coords_slice1.23$dist1/max(coords_slice1.23$dist1)
+
+coords_slice1.24_norm<-coords_slice1.24
+coords_slice1.24_norm$dist1<- coords_slice1.24$dist1/max(coords_slice1.24$dist1)
+
+coords_slice1.25_norm<-coords_slice1.25
+coords_slice1.25_norm$dist1<- coords_slice1.25$dist1/max(coords_slice1.25$dist1)
+
+coords_slice1.26_norm<-coords_slice1.26
+coords_slice1.26_norm$dist1<- coords_slice1.26$dist1/max(coords_slice1.26$dist1)
+
+coords_slice1.27_norm<-coords_slice1.27
+coords_slice1.27_norm$dist1<- coords_slice1.27$dist1/max(coords_slice1.27$dist1)
+
+
+all_coords_dist_norm<-rbind(coords_slice1_norm, coords_slice1.1_norm, coords_slice1.2_norm,coords_slice1.3_norm, coords_slice1.4_norm, coords_slice1.5_norm, coords_slice1.6_norm, coords_slice1.7_norm, coords_slice1.8_norm, coords_slice1.9_norm, coords_slice1.10_norm, coords_slice1.11_norm, coords_slice1.12_norm, coords_slice1.13_norm, coords_slice1.14_norm, coords_slice1.15_norm, coords_slice1.16_norm, coords_slice1.17_norm, coords_slice1.18_norm, coords_slice1.19_norm, coords_slice1.20_norm, coords_slice1.21_norm, coords_slice1.22_norm, coords_slice1.23_norm, coords_slice1.24_norm, coords_slice1.25_norm,coords_slice1.26_norm, coords_slice1.27_norm)
+
+
+all_coords_dist_norm <- subset(all_coords_dist_norm, select = c(dist1))
+
+names(all_coords_dist_norm)[names(all_coords_dist_norm) == 'dist1'] <- 'dist_norm'
+
+#merging<-AddMetaData(merging, all_coords_dist_norm)
+
+
+
+Idents(merging)<-'condition'
+merging$condition_orig.ident <- paste(Idents(merging), merging$orig.ident, sep="_")
+table(merging$condition_orig.ident)
+
+merging_largebits  <- merging[,grepl("Slide1SampleB|Slide4SampleC|Slide5SampleA|Slide5SampleB|Slide5SampleC|Slide5SampleD|Slide6SampleA|Slide7SampleA|Slide7SampleB|Slide8SampleA", merging$orig.ident, ignore.case=TRUE)]
+
+Idents(merging_largebits)<-'condition'
+merging_largebits$condition_orig.ident <- paste(Idents(merging_largebits), merging_largebits$orig.ident, sep="_")
+table(merging_largebits$condition_orig.ident)
+
+
+all_coords_dist_norm_largebits<-rbind( coords_slice1.1_norm, coords_slice1.11_norm,  coords_slice1.13_norm, coords_slice1.14_norm, coords_slice1.15_norm, coords_slice1.16_norm, coords_slice1.17_norm,  coords_slice1.21_norm, coords_slice1.22_norm, coords_slice1.25_norm)
+
+
+all_coords_dist_norm_anoNEW<-all_coords_dist_norm
+all_coords_dist_norm_anoNEW$Annotations_new<-'SL'
+all_coords_dist_norm_anoNEW$Annotations_new[all_coords_dist_norm_anoNEW$dist_norm > -0.1 & all_coords_dist_norm_anoNEW$dist_norm < 0.05] <- "Vasc"
+all_coords_dist_norm_anoNEW$Annotations_new[all_coords_dist_norm_anoNEW$dist_norm > 0.05 & all_coords_dist_norm_anoNEW$dist_norm < 0.15] <- "periVasc"
+all_coords_dist_norm_anoNEW$Annotations_new[all_coords_dist_norm_anoNEW$dist_norm > 0.15 & all_coords_dist_norm_anoNEW$dist_norm < 0.3] <- "int1"
+all_coords_dist_norm_anoNEW$Annotations_new[all_coords_dist_norm_anoNEW$dist_norm > 0.3 ]<-'far'
+
+all_coords_dist_norm_anoNEW$dist_norm<-NULL
+
+
+transfer.anchors <- FindTransferAnchors(reference = merging, query = merging, features = VariableFeatures(object = merging),    reference.assay = "Spatial", query.assay = "Spatial")
+
+predictions <- TransferData(anchorset = transfer.anchors, refdata = merging$named_clusters, dims = 1:30)
+
+predictions_safe<-predictions
+predictions <- predictions_safe
+predictions<-as.data.frame(predictions)
+predictions$dist<-all_coords_dist$dist1
+predictions$dist_norm<-all_coords_dist_norm$dist_norm
+
+
+predictions<-t(predictions)
+
+df_norm <- data.frame(Dist=all_coords_dist_norm$dist_norm, 
+				Score=as.numeric(predictions["prediction.score.Vascular.Niche", ]) / as.numeric(max(predictions["prediction.score.Vascular.Niche", ])), #scaling cell type signature to max here 
+				CellType="Vasc")
+
+
+df_LL_norm <- data.frame(Dist=all_coords_dist_norm$dist_norm, 
+				Score=as.numeric(predictions["prediction.score.Lining.Layer.Cells", ]) / as.numeric(max(predictions["prediction.score.Lining.Layer.Cells", ])), 
+				CellType="LL")
+
+df_COMP_norm <- data.frame(Dist=all_coords_dist_norm$dist_norm, 
+				Score=as.numeric(predictions["prediction.score.COMP..Fibroblast.Niche", ]) / as.numeric(max(predictions["prediction.score.COMP..Fibroblast.Niche", ])), 
+				CellType="COMP")
+
+df_APOD_norm <- data.frame(Dist=all_coords_dist_norm$dist_norm, 
+				Score=as.numeric(predictions["prediction.score.APOD..GAS5..FABP4.", ]) / as.numeric(max(predictions["prediction.score.APOD..GAS5..FABP4.", ])), 
+				CellType="APOD")
+
+df_Tcell_norm <- data.frame(Dist=all_coords_dist_norm$dist_norm, 
+				Score=as.numeric(predictions["prediction.score.T.Cell.Rich.Niche", ]) / as.numeric(max(predictions["prediction.score.T.Cell.Rich.Niche", ])), 
+				CellType="Tcell")
+
+df_Bcell_norm <- data.frame(Dist=all_coords_dist_norm$dist_norm, 
+				Score=as.numeric(predictions["prediction.score.B.Cell.Rich.Niche", ]) / as.numeric(max(predictions["prediction.score.B.Cell.Rich.Niche", ])), 
+				CellType="Bcell")
+
+df_all_norm<-rbind(df_norm, df_LL_norm,df_COMP_norm, df_APOD_norm, df_Tcell_norm, df_Bcell_norm)
+
+df_all_norm_f<-rbind(df_COMP_norm, df_APOD_norm, df_Tcell_norm, df_Bcell_norm)
+
+
+ggplot(df_all_norm_f, aes(Dist, Score, color=CellType)) + geom_smooth(alpha=.1) + labs(x="Distance from vasc", y="Cell Type Signal") + theme_light(base_size = 16)+theme_classic()+scale_colour_manual(values=c("Tcell"="#0C5BB0FF", "Erythrocytes"="#EE0011FF", "Bcell"="#15983DFF", "COMP"="#EC579AFF", "APOD"="#FA6B09FF", "Vasc"="#149BEDFF", "LL"= "#A1C720FF"))
+
+
+coords_slice1_for_aggr<-coords_slice1
+S1A_aggr<- subset(S1A, Annotations == "Aggregates")
+coords_slice1_aggr <- coords_slice1[(rownames(coords_slice1) %in% rownames(S1A_aggr)),]
+coords_slice1_aggr <- subset(coords_slice1_aggr, select = c(imagerow, imagecol))
+
+coords_slice1_for_aggr$dist1 <- NA
+coords_slice1_for_aggr$dist.x1 <- NA
+coords_slice1_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1_aggr[, 2:1]), pt=as.numeric(coords_slice1_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1_for_aggr$dist.x1[spot] <- coords_slice1_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1_for_aggr$dist.y1[spot] <- coords_slice1_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1_for_aggr)[which(names(coords_slice1_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1_for_aggr <- subset(coords_slice1_for_aggr, select = c(aggr_dist))
+Slide1SampleA<-AddMetaData(Slide1SampleA, coords_slice1_for_aggr)
+SpatialFeaturePlot(Slide1SampleA, "aggr_dist", images = "slice1")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide1SampleA, "Annotations", images = "slice1")+ theme(legend.position = 'none')
+
+
+coords_slice1.1_for_aggr<-coords_slice1.1
+S1B_aggr<- subset(S1B, Annotations == "Aggregates")
+coords_slice1.1_aggr <- coords_slice1.1[(rownames(coords_slice1.1) %in% rownames(S1B_aggr)),]
+coords_slice1.1_aggr <- subset(coords_slice1.1_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.1_for_aggr$dist1 <- NA
+coords_slice1.1_for_aggr$dist.x1 <- NA
+coords_slice1.1_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.1_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.1_aggr[, 2:1]), pt=as.numeric(coords_slice1.1_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.1_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.1_for_aggr$dist.x1[spot] <- coords_slice1.1_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.1_for_aggr$dist.y1[spot] <- coords_slice1.1_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.1_for_aggr)[which(names(coords_slice1.1_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.1_for_aggr <- subset(coords_slice1.1_for_aggr, select = c(aggr_dist))
+Slide1SampleB<-AddMetaData(Slide1SampleB, coords_slice1.1_for_aggr)
+SpatialFeaturePlot(Slide1SampleB, "aggr_dist", images = "slice1.1")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide1SampleB, "Annotations", images = "slice1.1")+ theme(legend.position = 'none')
+
+coords_slice1.3_for_aggr<-coords_slice1.3
+S2C_aggr<- subset(S2C, Annotations == "Aggregates")
+coords_slice1.3_aggr <- coords_slice1.3[(rownames(coords_slice1.3) %in% rownames(S2C_aggr)),]
+coords_slice1.3_aggr <- subset(coords_slice1.3_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.3_for_aggr$dist1 <- NA
+coords_slice1.3_for_aggr$dist.x1 <- NA
+coords_slice1.3_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.3_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.3_aggr[, 2:1]), pt=as.numeric(coords_slice1.3_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.3_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.3_for_aggr$dist.x1[spot] <- coords_slice1.3_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.3_for_aggr$dist.y1[spot] <- coords_slice1.3_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.3_for_aggr)[which(names(coords_slice1.3_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.3_for_aggr <- subset(coords_slice1.3_for_aggr, select = c(aggr_dist))
+Slide2SampleC<-AddMetaData(Slide2SampleC, coords_slice1.3_for_aggr)
+SpatialFeaturePlot(Slide2SampleC, "aggr_dist", images = "slice1.3")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide2SampleC, "Annotations", images = "slice1.3")+ theme(legend.position = 'none')
+
+coords_slice1.4_for_aggr<-coords_slice1.4
+S2D_aggr<- subset(S2D, Annotations == "Aggregates")
+coords_slice1.4_aggr <- coords_slice1.4[(rownames(coords_slice1.4) %in% rownames(S2D_aggr)),]
+coords_slice1.4_aggr <- subset(coords_slice1.4_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.4_for_aggr$dist1 <- NA
+coords_slice1.4_for_aggr$dist.x1 <- NA
+coords_slice1.4_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.4_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.4_aggr[, 2:1]), pt=as.numeric(coords_slice1.4_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.4_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.4_for_aggr$dist.x1[spot] <- coords_slice1.4_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.4_for_aggr$dist.y1[spot] <- coords_slice1.4_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.4_for_aggr)[which(names(coords_slice1.4_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.4_for_aggr <- subset(coords_slice1.4_for_aggr, select = c(aggr_dist))
+Slide2SampleD<-AddMetaData(Slide2SampleD, coords_slice1.4_for_aggr)
+SpatialFeaturePlot(Slide2SampleD, "aggr_dist", images = "slice1.4")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide2SampleD, "Annotations", images = "slice1.4")+ theme(legend.position = 'none')
+
+coords_slice1.5_for_aggr<-coords_slice1.5
+S3A_aggr<- subset(S3A, Annotations == "Aggregates")
+coords_slice1.5_aggr <- coords_slice1.5[(rownames(coords_slice1.5) %in% rownames(S3A_aggr)),]
+coords_slice1.5_aggr <- subset(coords_slice1.5_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.5_for_aggr$dist1 <- NA
+coords_slice1.5_for_aggr$dist.x1 <- NA
+coords_slice1.5_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.5_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.5_aggr[, 2:1]), pt=as.numeric(coords_slice1.5_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.5_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.5_for_aggr$dist.x1[spot] <- coords_slice1.5_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.5_for_aggr$dist.y1[spot] <- coords_slice1.5_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.5_for_aggr)[which(names(coords_slice1.5_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.5_for_aggr <- subset(coords_slice1.5_for_aggr, select = c(aggr_dist))
+Slide3SampleA<-AddMetaData(Slide3SampleA, coords_slice1.5_for_aggr)
+SpatialFeaturePlot(Slide3SampleA, "aggr_dist", images = "slice1.5")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide3SampleA, "Annotations", images = "slice1.5")+ theme(legend.position = 'none')
+
+coords_slice1.6_for_aggr<-coords_slice1.6
+S3B_aggr<- subset(S3B, Annotations == "Aggregates")
+coords_slice1.6_aggr <- coords_slice1.6[(rownames(coords_slice1.6) %in% rownames(S3B_aggr)),]
+coords_slice1.6_aggr <- subset(coords_slice1.6_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.6_for_aggr$dist1 <- NA
+coords_slice1.6_for_aggr$dist.x1 <- NA
+coords_slice1.6_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.6_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.6_aggr[, 2:1]), pt=as.numeric(coords_slice1.6_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.6_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.6_for_aggr$dist.x1[spot] <- coords_slice1.6_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.6_for_aggr$dist.y1[spot] <- coords_slice1.6_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.6_for_aggr)[which(names(coords_slice1.6_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.6_for_aggr <- subset(coords_slice1.6_for_aggr, select = c(aggr_dist))
+Slide3SampleB<-AddMetaData(Slide3SampleB, coords_slice1.6_for_aggr)
+SpatialFeaturePlot(Slide3SampleB, "aggr_dist", images = "slice1.6")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide3SampleB, "Annotations", images = "slice1.6")+ theme(legend.position = 'none')
+
+coords_slice1.7_for_aggr<-coords_slice1.7
+S3C_aggr<- subset(S3C, Annotations == "Aggregates")
+coords_slice1.7_aggr <- coords_slice1.7[(rownames(coords_slice1.7) %in% rownames(S3C_aggr)),]
+coords_slice1.7_aggr <- subset(coords_slice1.7_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.7_for_aggr$dist1 <- NA
+coords_slice1.7_for_aggr$dist.x1 <- NA
+coords_slice1.7_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.7_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.7_aggr[, 2:1]), pt=as.numeric(coords_slice1.7_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.7_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.7_for_aggr$dist.x1[spot] <- coords_slice1.7_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.7_for_aggr$dist.y1[spot] <- coords_slice1.7_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.7_for_aggr)[which(names(coords_slice1.7_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.7_for_aggr <- subset(coords_slice1.7_for_aggr, select = c(aggr_dist))
+Slide3SampleC<-AddMetaData(Slide3SampleC, coords_slice1.7_for_aggr)
+SpatialFeaturePlot(Slide3SampleC, "aggr_dist", images = "slice1.7")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide3SampleC, "Annotations", images = "slice1.7")+ theme(legend.position = 'none')
+
+coords_slice1.8_for_aggr<-coords_slice1.8
+S3D_aggr<- subset(S3D, Annotations == "Aggregates")
+coords_slice1.8_aggr <- coords_slice1.8[(rownames(coords_slice1.8) %in% rownames(S3D_aggr)),]
+coords_slice1.8_aggr <- subset(coords_slice1.8_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.8_for_aggr$dist1 <- NA
+coords_slice1.8_for_aggr$dist.x1 <- NA
+coords_slice1.8_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.8_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.8_aggr[, 2:1]), pt=as.numeric(coords_slice1.8_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.8_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.8_for_aggr$dist.x1[spot] <- coords_slice1.8_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.8_for_aggr$dist.y1[spot] <- coords_slice1.8_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.8_for_aggr)[which(names(coords_slice1.8_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.8_for_aggr <- subset(coords_slice1.8_for_aggr, select = c(aggr_dist))
+Slide3SampleD<-AddMetaData(Slide3SampleD, coords_slice1.8_for_aggr)
+SpatialFeaturePlot(Slide3SampleD, "aggr_dist", images = "slice1.8")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide3SampleD, "Annotations", images = "slice1.8")+ theme(legend.position = 'none')
+
+coords_slice1.9_for_aggr<-coords_slice1.9
+S4A_aggr<- subset(S4A, Annotations == "Aggregates")
+coords_slice1.9_aggr <- coords_slice1.9[(rownames(coords_slice1.9) %in% rownames(S4A_aggr)),]
+coords_slice1.9_aggr <- subset(coords_slice1.9_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.9_for_aggr$dist1 <- NA
+coords_slice1.9_for_aggr$dist.x1 <- NA
+coords_slice1.9_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.9_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.9_aggr[, 2:1]), pt=as.numeric(coords_slice1.9_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.9_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.9_for_aggr$dist.x1[spot] <- coords_slice1.9_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.9_for_aggr$dist.y1[spot] <- coords_slice1.9_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.9_for_aggr)[which(names(coords_slice1.9_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.9_for_aggr <- subset(coords_slice1.9_for_aggr, select = c(aggr_dist))
+Slide4SampleA<-AddMetaData(Slide4SampleA, coords_slice1.9_for_aggr)
+SpatialFeaturePlot(Slide4SampleA, "aggr_dist", images = "slice1.9")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide4SampleA, "Annotations", images = "slice1.9")+ theme(legend.position = 'none')
+
+coords_slice1.10_for_aggr<-coords_slice1.10
+S4B_aggr<- subset(S4B, Annotations == "Aggregates")
+coords_slice1.10_aggr <- coords_slice1.10[(rownames(coords_slice1.10) %in% rownames(S4B_aggr)),]
+coords_slice1.10_aggr <- subset(coords_slice1.10_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.10_for_aggr$dist1 <- NA
+coords_slice1.10_for_aggr$dist.x1 <- NA
+coords_slice1.10_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.10_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.10_aggr[, 2:1]), pt=as.numeric(coords_slice1.10_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.10_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.10_for_aggr$dist.x1[spot] <- coords_slice1.10_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.10_for_aggr$dist.y1[spot] <- coords_slice1.10_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.10_for_aggr)[which(names(coords_slice1.10_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.10_for_aggr <- subset(coords_slice1.10_for_aggr, select = c(aggr_dist))
+Slide4SampleB<-AddMetaData(Slide4SampleB, coords_slice1.10_for_aggr)
+SpatialFeaturePlot(Slide4SampleB, "aggr_dist", images = "slice1.10")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide4SampleB, "Annotations", images = "slice1.10")+ theme(legend.position = 'none')
+
+coords_slice1.12_for_aggr<-coords_slice1.12
+S4D_aggr<- subset(S4D, Annotations == "Aggregates")
+coords_slice1.12_aggr <- coords_slice1.12[(rownames(coords_slice1.12) %in% rownames(S4D_aggr)),]
+coords_slice1.12_aggr <- subset(coords_slice1.12_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.12_for_aggr$dist1 <- NA
+coords_slice1.12_for_aggr$dist.x1 <- NA
+coords_slice1.12_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.12_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.12_aggr[, 2:1]), pt=as.numeric(coords_slice1.12_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.12_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.12_for_aggr$dist.x1[spot] <- coords_slice1.12_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.12_for_aggr$dist.y1[spot] <- coords_slice1.12_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.12_for_aggr)[which(names(coords_slice1.12_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.12_for_aggr <- subset(coords_slice1.12_for_aggr, select = c(aggr_dist))
+Slide4SampleD<-AddMetaData(Slide4SampleD, coords_slice1.12_for_aggr)
+SpatialFeaturePlot(Slide4SampleD, "aggr_dist", images = "slice1.12")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide4SampleD, "Annotations", images = "slice1.12")+ theme(legend.position = 'none')
+
+coords_slice1.13_for_aggr<-coords_slice1.13
+S5A_aggr<- subset(S5A, Annotations == "Aggregates")
+coords_slice1.13_aggr <- coords_slice1.13[(rownames(coords_slice1.13) %in% rownames(S5A_aggr)),]
+coords_slice1.13_aggr <- subset(coords_slice1.13_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.13_for_aggr$dist1 <- NA
+coords_slice1.13_for_aggr$dist.x1 <- NA
+coords_slice1.13_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.13_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.13_aggr[, 2:1]), pt=as.numeric(coords_slice1.13_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.13_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.13_for_aggr$dist.x1[spot] <- coords_slice1.13_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.13_for_aggr$dist.y1[spot] <- coords_slice1.13_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.13_for_aggr)[which(names(coords_slice1.13_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.13_for_aggr <- subset(coords_slice1.13_for_aggr, select = c(aggr_dist))
+Slide5SampleA<-AddMetaData(Slide5SampleA, coords_slice1.13_for_aggr)
+SpatialFeaturePlot(Slide5SampleA, "aggr_dist", images = "slice1.13")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide5SampleA, "Annotations", images = "slice1.13")+ theme(legend.position = 'none')
+
+coords_slice1.14_for_aggr<-coords_slice1.14
+S5B_aggr<- subset(S5B, Annotations == "Aggregates")
+coords_slice1.14_aggr <- coords_slice1.14[(rownames(coords_slice1.14) %in% rownames(S5B_aggr)),]
+coords_slice1.14_aggr <- subset(coords_slice1.14_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.14_for_aggr$dist1 <- NA
+coords_slice1.14_for_aggr$dist.x1 <- NA
+coords_slice1.14_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.14_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.14_aggr[, 2:1]), pt=as.numeric(coords_slice1.14_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.14_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.14_for_aggr$dist.x1[spot] <- coords_slice1.14_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.14_for_aggr$dist.y1[spot] <- coords_slice1.14_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.14_for_aggr)[which(names(coords_slice1.14_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.14_for_aggr <- subset(coords_slice1.14_for_aggr, select = c(aggr_dist))
+Slide5SampleB<-AddMetaData(Slide5SampleB, coords_slice1.14_for_aggr)
+SpatialFeaturePlot(Slide5SampleB, "aggr_dist", images = "slice1.14")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide5SampleB, "Annotations", images = "slice1.14")+ theme(legend.position = 'none')
+
+coords_slice1.15_for_aggr<-coords_slice1.15
+S5C_aggr<- subset(S5C, Annotations == "Aggregates")
+coords_slice1.15_aggr <- coords_slice1.15[(rownames(coords_slice1.15) %in% rownames(S5C_aggr)),]
+coords_slice1.15_aggr <- subset(coords_slice1.15_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.15_for_aggr$dist1 <- NA
+coords_slice1.15_for_aggr$dist.x1 <- NA
+coords_slice1.15_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.15_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.15_aggr[, 2:1]), pt=as.numeric(coords_slice1.15_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.15_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.15_for_aggr$dist.x1[spot] <- coords_slice1.15_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.15_for_aggr$dist.y1[spot] <- coords_slice1.15_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.15_for_aggr)[which(names(coords_slice1.15_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.15_for_aggr <- subset(coords_slice1.15_for_aggr, select = c(aggr_dist))
+Slide5SampleC<-AddMetaData(Slide5SampleC, coords_slice1.15_for_aggr)
+SpatialFeaturePlot(Slide5SampleC, "aggr_dist", images = "slice1.15")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide5SampleC, "Annotations", images = "slice1.15")+ theme(legend.position = 'none')
+
+coords_slice1.17_for_aggr<-coords_slice1.17
+S6A_aggr<- subset(S6A, Annotations == "Aggregates")
+coords_slice1.17_aggr <- coords_slice1.17[(rownames(coords_slice1.17) %in% rownames(S6A_aggr)),]
+coords_slice1.17_aggr <- subset(coords_slice1.17_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.17_for_aggr$dist1 <- NA
+coords_slice1.17_for_aggr$dist.x1 <- NA
+coords_slice1.17_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.17_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.17_aggr[, 2:1]), pt=as.numeric(coords_slice1.17_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.17_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.17_for_aggr$dist.x1[spot] <- coords_slice1.17_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.17_for_aggr$dist.y1[spot] <- coords_slice1.17_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.17_for_aggr)[which(names(coords_slice1.17_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.17_for_aggr <- subset(coords_slice1.17_for_aggr, select = c(aggr_dist))
+Slide6SampleA<-AddMetaData(Slide6SampleA, coords_slice1.17_for_aggr)
+SpatialFeaturePlot(Slide6SampleA, "aggr_dist", images = "slice1.17")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide6SampleA, "Annotations", images = "slice1.17")+ theme(legend.position = 'none')
+
+coords_slice1.19_for_aggr<-coords_slice1.19
+S6C_aggr<- subset(S6C, Annotations == "Aggregates")
+coords_slice1.19_aggr <- coords_slice1.19[(rownames(coords_slice1.19) %in% rownames(S6C_aggr)),]
+coords_slice1.19_aggr <- subset(coords_slice1.19_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.19_for_aggr$dist1 <- NA
+coords_slice1.19_for_aggr$dist.x1 <- NA
+coords_slice1.19_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.19_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.19_aggr[, 2:1]), pt=as.numeric(coords_slice1.19_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.19_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.19_for_aggr$dist.x1[spot] <- coords_slice1.19_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.19_for_aggr$dist.y1[spot] <- coords_slice1.19_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.19_for_aggr)[which(names(coords_slice1.19_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.19_for_aggr <- subset(coords_slice1.19_for_aggr, select = c(aggr_dist))
+Slide6SampleC<-AddMetaData(Slide6SampleC, coords_slice1.19_for_aggr)
+SpatialFeaturePlot(Slide6SampleC, "aggr_dist", images = "slice1.19")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide6SampleC, "Annotations", images = "slice1.19")+ theme(legend.position = 'none')
+
+coords_slice1.20_for_aggr<-coords_slice1.20
+S6D_aggr<- subset(S6D, Annotations == "Aggregates")
+coords_slice1.20_aggr <- coords_slice1.20[(rownames(coords_slice1.20) %in% rownames(S6D_aggr)),]
+coords_slice1.20_aggr <- subset(coords_slice1.20_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.20_for_aggr$dist1 <- NA
+coords_slice1.20_for_aggr$dist.x1 <- NA
+coords_slice1.20_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.20_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.20_aggr[, 2:1]), pt=as.numeric(coords_slice1.20_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.20_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.20_for_aggr$dist.x1[spot] <- coords_slice1.20_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.20_for_aggr$dist.y1[spot] <- coords_slice1.20_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.20_for_aggr)[which(names(coords_slice1.20_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.20_for_aggr <- subset(coords_slice1.20_for_aggr, select = c(aggr_dist))
+Slide6SampleD<-AddMetaData(Slide6SampleD, coords_slice1.20_for_aggr)
+SpatialFeaturePlot(Slide6SampleD, "aggr_dist", images = "slice1.20")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide6SampleD, "Annotations", images = "slice1.20")+ theme(legend.position = 'none')
+
+coords_slice1.23_for_aggr<-coords_slice1.23
+S7C_aggr<- subset(S7C, Annotations == "Aggregates")
+coords_slice1.23_aggr <- coords_slice1.23[(rownames(coords_slice1.23) %in% rownames(S7C_aggr)),]
+coords_slice1.23_aggr <- subset(coords_slice1.23_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.23_for_aggr$dist1 <- NA
+coords_slice1.23_for_aggr$dist.x1 <- NA
+coords_slice1.23_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.23_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.23_aggr[, 2:1]), pt=as.numeric(coords_slice1.23_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.23_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.23_for_aggr$dist.x1[spot] <- coords_slice1.23_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.23_for_aggr$dist.y1[spot] <- coords_slice1.23_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.23_for_aggr)[which(names(coords_slice1.23_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.23_for_aggr <- subset(coords_slice1.23_for_aggr, select = c(aggr_dist))
+Slide7SampleC<-AddMetaData(Slide7SampleC, coords_slice1.23_for_aggr)
+SpatialFeaturePlot(Slide7SampleC, "aggr_dist", images = "slice1.23")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide7SampleC, "Annotations", images = "slice1.23")+ theme(legend.position = 'none')
+
+coords_slice1.24_for_aggr<-coords_slice1.24
+S7D_aggr<- subset(S7D, Annotations == "Aggregates")
+coords_slice1.24_aggr <- coords_slice1.24[(rownames(coords_slice1.24) %in% rownames(S7D_aggr)),]
+coords_slice1.24_aggr <- subset(coords_slice1.24_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.24_for_aggr$dist1 <- NA
+coords_slice1.24_for_aggr$dist.x1 <- NA
+coords_slice1.24_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.24_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.24_aggr[, 2:1]), pt=as.numeric(coords_slice1.24_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.24_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.24_for_aggr$dist.x1[spot] <- coords_slice1.24_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.24_for_aggr$dist.y1[spot] <- coords_slice1.24_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.24_for_aggr)[which(names(coords_slice1.24_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.24_for_aggr <- subset(coords_slice1.24_for_aggr, select = c(aggr_dist))
+Slide7SampleD<-AddMetaData(Slide7SampleD, coords_slice1.24_for_aggr)
+SpatialFeaturePlot(Slide7SampleD, "aggr_dist", images = "slice1.24")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide7SampleD, "Annotations", images = "slice1.24")+ theme(legend.position = 'none')
+
+coords_slice1.25_for_aggr<-coords_slice1.25
+S8A_aggr<- subset(S8A, Annotations == "Aggregates")
+coords_slice1.25_aggr <- coords_slice1.25[(rownames(coords_slice1.25) %in% rownames(S8A_aggr)),]
+coords_slice1.25_aggr <- subset(coords_slice1.25_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.25_for_aggr$dist1 <- NA
+coords_slice1.25_for_aggr$dist.x1 <- NA
+coords_slice1.25_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.25_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.25_aggr[, 2:1]), pt=as.numeric(coords_slice1.25_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.25_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.25_for_aggr$dist.x1[spot] <- coords_slice1.25_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.25_for_aggr$dist.y1[spot] <- coords_slice1.25_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.25_for_aggr)[which(names(coords_slice1.25_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.25_for_aggr <- subset(coords_slice1.25_for_aggr, select = c(aggr_dist))
+Slide8SampleA<-AddMetaData(Slide8SampleA, coords_slice1.25_for_aggr)
+SpatialFeaturePlot(Slide8SampleA, "aggr_dist", images = "slice1.25")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide8SampleA, "Annotations", images = "slice1.25")+ theme(legend.position = 'none')
+
+coords_slice1.26_for_aggr<-coords_slice1.26
+S8B_aggr<- subset(S8B, Annotations == "Aggregates")
+coords_slice1.26_aggr <- coords_slice1.26[(rownames(coords_slice1.26) %in% rownames(S8B_aggr)),]
+coords_slice1.26_aggr <- subset(coords_slice1.26_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.26_for_aggr$dist1 <- NA
+coords_slice1.26_for_aggr$dist.x1 <- NA
+coords_slice1.26_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.26_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.26_aggr[, 2:1]), pt=as.numeric(coords_slice1.26_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.26_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.26_for_aggr$dist.x1[spot] <- coords_slice1.26_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.26_for_aggr$dist.y1[spot] <- coords_slice1.26_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.26_for_aggr)[which(names(coords_slice1.26_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.26_for_aggr <- subset(coords_slice1.26_for_aggr, select = c(aggr_dist))
+Slide8SampleB<-AddMetaData(Slide8SampleB, coords_slice1.26_for_aggr)
+SpatialFeaturePlot(Slide8SampleB, "aggr_dist", images = "slice1.26")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide8SampleB, "Annotations", images = "slice1.26")+ theme(legend.position = 'none')
+
+coords_slice1.27_for_aggr<-coords_slice1.27
+S8C_aggr<- subset(S8C, Annotations == "Aggregates")
+coords_slice1.27_aggr <- coords_slice1.27[(rownames(coords_slice1.27) %in% rownames(S8C_aggr)),]
+coords_slice1.27_aggr <- subset(coords_slice1.27_aggr, select = c(imagerow, imagecol))
+
+coords_slice1.27_for_aggr$dist1 <- NA
+coords_slice1.27_for_aggr$dist.x1 <- NA
+coords_slice1.27_for_aggr$dist.y1 <- NA
+
+library(sp)
+
+for ( spot in 1:nrow(coords_slice1.27_for_aggr)){
+  
+  dists <- spDistsN1(as.matrix(coords_slice1.27_aggr[, 2:1]), pt=as.numeric(coords_slice1.27_for_aggr[spot, c( "imagecol", "imagerow")]))
+  coords_slice1.27_for_aggr$dist1[spot] <- min(dists)
+  coords_slice1.27_for_aggr$dist.x1[spot] <- coords_slice1.27_aggr[which(dists == min(dists))[1], 1]
+  coords_slice1.27_for_aggr$dist.y1[spot] <- coords_slice1.27_aggr[which(dists == min(dists))[1], 2]
+    
+
+}
+colnames(coords_slice1.27_for_aggr)[which(names(coords_slice1.27_for_aggr) == 'dist1')] <- 'aggr_dist'
+coords_slice1.27_for_aggr <- subset(coords_slice1.27_for_aggr, select = c(aggr_dist))
+Slide8SampleC<-AddMetaData(Slide8SampleC, coords_slice1.27_for_aggr)
+SpatialFeaturePlot(Slide8SampleC, "aggr_dist", images = "slice1.27")+ theme(legend.position = 'none')
+SpatialDimPlot(Slide8SampleC, "Annotations", images = "slice1.27")+ theme(legend.position = 'none')
+```
+
+
+```{r}
+
+
+coords_slice1_for_aggr_norm<-coords_slice1_for_aggr
+coords_slice1_for_aggr_norm$aggr_dist<- coords_slice1_for_aggr$aggr_dist/max(coords_slice1_for_aggr$aggr_dist)
+
+coords_slice1.1_for_aggr_norm<-coords_slice1.1_for_aggr
+coords_slice1.1_for_aggr_norm$aggr_dist<- coords_slice1.1_for_aggr$aggr_dist/max(coords_slice1.1_for_aggr$aggr_dist)
+
+coords_slice1.3_for_aggr_norm<-coords_slice1.3_for_aggr
+coords_slice1.3_for_aggr_norm$aggr_dist<- coords_slice1.3_for_aggr$aggr_dist/max(coords_slice1.3_for_aggr$aggr_dist)
+
+coords_slice1.4_for_aggr_norm<-coords_slice1.4_for_aggr
+coords_slice1.4_for_aggr_norm$aggr_dist<- coords_slice1.4_for_aggr$aggr_dist/max(coords_slice1.4_for_aggr$aggr_dist)
+
+coords_slice1.5_for_aggr_norm<-coords_slice1.5_for_aggr
+coords_slice1.5_for_aggr_norm$aggr_dist<- coords_slice1.5_for_aggr$aggr_dist/max(coords_slice1.5_for_aggr$aggr_dist)
+
+coords_slice1.6_for_aggr_norm<-coords_slice1.6_for_aggr
+coords_slice1.6_for_aggr_norm$aggr_dist<- coords_slice1.6_for_aggr$aggr_dist/max(coords_slice1.6_for_aggr$aggr_dist)
+
+coords_slice1.7_for_aggr_norm<-coords_slice1.7_for_aggr
+coords_slice1.7_for_aggr_norm$aggr_dist<- coords_slice1.7_for_aggr$aggr_dist/max(coords_slice1.7_for_aggr$aggr_dist)
+
+coords_slice1.8_for_aggr_norm<-coords_slice1.8_for_aggr
+coords_slice1.8_for_aggr_norm$aggr_dist<- coords_slice1.8_for_aggr$aggr_dist/max(coords_slice1.8_for_aggr$aggr_dist)
+
+coords_slice1.9_for_aggr_norm<-coords_slice1.9_for_aggr
+coords_slice1.9_for_aggr_norm$aggr_dist<- coords_slice1.9_for_aggr$aggr_dist/max(coords_slice1.9_for_aggr$aggr_dist)
+
+coords_slice1.10_for_aggr_norm<-coords_slice1.10_for_aggr
+coords_slice1.10_for_aggr_norm$aggr_dist<- coords_slice1.10_for_aggr$aggr_dist/max(coords_slice1.10_for_aggr$aggr_dist)
+
+coords_slice1.12_for_aggr_norm<-coords_slice1.12_for_aggr
+coords_slice1.12_for_aggr_norm$aggr_dist<- coords_slice1.12_for_aggr$aggr_dist/max(coords_slice1.12_for_aggr$aggr_dist)
+
+coords_slice1.13_for_aggr_norm<-coords_slice1.13_for_aggr
+coords_slice1.13_for_aggr_norm$aggr_dist<- coords_slice1.13_for_aggr$aggr_dist/max(coords_slice1.13_for_aggr$aggr_dist)
+
+coords_slice1.14_for_aggr_norm<-coords_slice1.14_for_aggr
+coords_slice1.14_for_aggr_norm$aggr_dist<- coords_slice1.14_for_aggr$aggr_dist/max(coords_slice1.14_for_aggr$aggr_dist)
+
+coords_slice1.15_for_aggr_norm<-coords_slice1.15_for_aggr
+coords_slice1.15_for_aggr_norm$aggr_dist<- coords_slice1.15_for_aggr$aggr_dist/max(coords_slice1.15_for_aggr$aggr_dist)
+
+coords_slice1.17_for_aggr_norm<-coords_slice1.17_for_aggr
+coords_slice1.17_for_aggr_norm$aggr_dist<- coords_slice1.17_for_aggr$aggr_dist/max(coords_slice1.17_for_aggr$aggr_dist)
+
+coords_slice1.19_for_aggr_norm<-coords_slice1.19_for_aggr
+coords_slice1.19_for_aggr_norm$aggr_dist<- coords_slice1.19_for_aggr$aggr_dist/max(coords_slice1.19_for_aggr$aggr_dist)
+                                                         
+coords_slice1.20_for_aggr_norm<-coords_slice1.20_for_aggr
+coords_slice1.20_for_aggr_norm$aggr_dist<- coords_slice1.20_for_aggr$aggr_dist/max(coords_slice1.20_for_aggr$aggr_dist) 
+
+coords_slice1.23_for_aggr_norm<-coords_slice1.23_for_aggr
+coords_slice1.23_for_aggr_norm$aggr_dist<- coords_slice1.23_for_aggr$aggr_dist/max(coords_slice1.23_for_aggr$aggr_dist)
+
+coords_slice1.24_for_aggr_norm<-coords_slice1.24_for_aggr
+coords_slice1.24_for_aggr_norm$aggr_dist<- coords_slice1.24_for_aggr$aggr_dist/max(coords_slice1.24_for_aggr$aggr_dist)
+
+coords_slice1.25_for_aggr_norm<-coords_slice1.25_for_aggr
+coords_slice1.25_for_aggr_norm$aggr_dist<- coords_slice1.25_for_aggr$aggr_dist/max(coords_slice1.25_for_aggr$aggr_dist)
+
+coords_slice1.26_for_aggr_norm<-coords_slice1.26_for_aggr
+coords_slice1.26_for_aggr_norm$aggr_dist<- coords_slice1.26_for_aggr$aggr_dist/max(coords_slice1.26_for_aggr$aggr_dist)
+
+coords_slice1.27_for_aggr_norm<-coords_slice1.27_for_aggr
+coords_slice1.27_for_aggr_norm$aggr_dist<- coords_slice1.27_for_aggr$aggr_dist/max(coords_slice1.27_for_aggr$aggr_dist)
+
+
+all_coords_dist_for_aggr_norm<-rbind(coords_slice1_for_aggr_norm, coords_slice1.1_for_aggr_norm, coords_slice1.3_for_aggr_norm, coords_slice1.4_for_aggr_norm, coords_slice1.5_for_aggr_norm, coords_slice1.6_for_aggr_norm, coords_slice1.7_for_aggr_norm, coords_slice1.8_for_aggr_norm, coords_slice1.9_for_aggr_norm, coords_slice1.10_for_aggr_norm, coords_slice1.12_for_aggr_norm, coords_slice1.13_for_aggr_norm, coords_slice1.14_for_aggr_norm, coords_slice1.15_for_aggr_norm,  coords_slice1.17_for_aggr_norm, coords_slice1.19_for_aggr_norm, coords_slice1.20_for_aggr_norm,  coords_slice1.23_for_aggr_norm, coords_slice1.24_for_aggr_norm, coords_slice1.25_for_aggr_norm,coords_slice1.26_for_aggr_norm, coords_slice1.27_for_aggr_norm)
+
+predictions_aggr<-t(predictions)
+predictions_aggr<-as.data.frame(predictions_aggr)
+predictions_aggr <- predictions_aggr[(rownames(predictions_aggr) %in% rownames(all_coords_dist_for_aggr_norm)),]
+nrow(predictions_aggr)
+nrow(all_coords_dist_for_aggr_norm)
+predictions_aggr<-t(predictions_aggr)
+predictions_aggr<-as.matrix(predictions_aggr)
+
+
+df_aggr <- data.frame(Dist=all_coords_dist_for_aggr_norm$aggr_dist, 
+				Score=as.numeric(predictions_aggr["prediction.score.Vascular.Niche", ]) / as.numeric(max(predictions_aggr["prediction.score.Vascular.Niche", ])), #scaling cell type signature to max here 
+				CellType="Vasc")
+
+
+df_aggr_LL <- data.frame(Dist=all_coords_dist_for_aggr_norm$aggr_dist, 
+				Score=as.numeric(predictions_aggr["prediction.score.Lining.Layer.Cells", ]) / as.numeric(max(predictions_aggr["prediction.score.Lining.Layer.Cells", ])), 
+				CellType="LL")
+
+df_aggr_COMP <- data.frame(Dist=all_coords_dist_for_aggr_norm$aggr_dist, 
+				Score=as.numeric(predictions_aggr["prediction.score.COMP..Fibroblast.Niche", ]) / as.numeric(max(predictions_aggr["prediction.score.COMP..Fibroblast.Niche", ])), 
+				CellType="COMP")
+
+df_aggr_APOD <- data.frame(Dist=all_coords_dist_for_aggr_norm$aggr_dist, 
+				Score=as.numeric(predictions_aggr["prediction.score.APOD..GAS5..FABP4.", ]) / as.numeric(max(predictions_aggr["prediction.score.APOD..GAS5..FABP4.", ])), 
+				CellType="APOD")
+
+df_aggr_Tcell <- data.frame(Dist=all_coords_dist_for_aggr_norm$aggr_dist, 
+				Score=as.numeric(predictions_aggr["prediction.score.T.Cell.Rich.Niche", ]) / as.numeric(max(predictions_aggr["prediction.score.T.Cell.Rich.Niche", ])), 
+				CellType="Tcell")
+
+df_aggr_Bcell <- data.frame(Dist=all_coords_dist_for_aggr_norm$aggr_dist, 
+				Score=as.numeric(predictions_aggr["prediction.score.B.Cell.Rich.Niche", ]) / as.numeric(max(predictions_aggr["prediction.score.B.Cell.Rich.Niche", ])), 
+				CellType="Bcell")
+
+ggplot(df_aggr_COMP, aes(Dist, Score, color=CellType, lty=CellType)) + geom_smooth(alpha=.1) + labs(x="Distance (towards lumen)", y="Cell Type Signal") + theme_light(base_size = 16)+theme_classic()
+
+ggplot(df_all_norm, aes(Dist, Score, color=CellType)) + geom_smooth(alpha=.1) + labs(x="Distance from vasc cells", y="Cell Type Signal") + theme_light(base_size = 16)+theme_classic()+scale_colour_manual(values=c("Tcell"="#0C5BB0FF", "Erythrocytes"="#EE0011FF", "Bcell"="#15983DFF", "COMP"="#EC579AFF", "APOD"="#FA6B09FF", "Vasc"="#149BEDFF", "LL"= "#A1C720FF"))
+
+df_aggr_all<-rbind(df_aggr, df_aggr_LL,df_aggr_COMP, df_aggr_APOD, df_aggr_Tcell, df_aggr_Bcell)
+
+df_aggr_all_f<-rbind( df_aggr_COMP, df_aggr_APOD, df_aggr_Tcell, df_aggr_Bcell)
+
+
+ggplot(df_aggr_all_f, aes(Dist, Score, color=CellType)) + geom_smooth(alpha=.1) + labs(x="Distance from aggr", y="Cell Type Signal") + theme_light(base_size = 16)+theme_classic()+scale_colour_manual(values=c("Tcell"="#0C5BB0FF", "Erythrocytes"="#EE0011FF", "Bcell"="#15983DFF", "COMP"="#EC579AFF", "APOD"="#FA6B09FF", "Vasc"="#149BEDFF", "LL"= "#A1C720FF"))
+
+
+Tcell_aggr<-merging@meta.data %>% select(c("endo_interacting_new1", "Tcell_interacting_new1", "pathotype"))
+Tcell_aggr <- Tcell_aggr[rownames(Tcell_aggr) %in% rownames(all_coords_dist_for_aggr_norm),]
+
+df_Tcell_aggr <- data.frame(Dist=all_coords_dist_for_aggr_norm$aggr_dist, 
+				Score=as.numeric(Tcell_aggr$endo_interacting_new1) / as.numeric(max(Tcell_aggr$endo_interacting_new1)))
+
+df_Tcell_aggr$pathotype <- Tcell_aggr$pathotype
+
+df_Tcell_aggr %>% filter(pathotype != "Diffuse") %>%  ggplot(aes(Dist, Score, color=pathotype)) + geom_smooth(alpha=.1) + labs(x="Distance from aggr)", y="Cell Type Signal") + theme_light(base_size = 16)+theme_classic()+
+ggtitle("endo_interacting_new1")
+
+#do T cell and  endo interacting from vasculature only
+Tcell<-merging@meta.data %>% select(c("endo_interacting_new1", "Tcell_interacting_new1", "pathotype"))
+#Tcell_ <- Tcell[rownames(Tcell) %in% rownames(all_coords_dist_norm),]
+
+df_Tcell <- data.frame(Dist=all_coords_dist_norm$dist_norm, 
+				Score=as.numeric(Tcell$Tcell_interacting_new1) / as.numeric(max(Tcell$Tcell_interacting_new1)))
+
+df_Tcell$pathotype <- Tcell$pathotype
+
+df_Tcell %>% filter(pathotype != "Diffuse") %>%  ggplot(aes(Dist, Score, color=pathotype)) + geom_smooth(alpha=.1) + labs(x="Distance from aggr)", y="Cell Type Signal") + theme_light(base_size = 16)+theme_classic()+
+ggtitle("Tcell_interacting_new1")
+
+df_endo <- data.frame(Dist=all_coords_dist_norm$dist_norm, 
+				Score=as.numeric(Tcell$endo_interacting_new1) / as.numeric(max(Tcell$endo_interacting_new1)))
+
+df_endo$pathotype <- Tcell$pathotype
+
+df_endo %>% filter(pathotype != "Diffuse") %>%  ggplot(aes(Dist, Score, color=pathotype)) + geom_smooth(alpha=.1) + labs(x="Distance from aggr)", y="Cell Type Signal") + theme_light(base_size = 16)+theme_classic()+
+ggtitle("endo_interacting_new1")
