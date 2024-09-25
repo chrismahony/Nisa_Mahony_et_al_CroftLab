@@ -1,0 +1,1444 @@
+
+
+```{r}
+library(NanoStringNCTools)
+library(GeomxTools)
+library(GeoMxWorkflows)
+
+
+#for RCC files https://www.bioconductor.org/packages/devel/bioc/vignettes/NanoStringNCTools/inst/doc/Introduction.html
+
+
+#analysis from : https://bioconductor.org/packages/release/workflows/vignettes/GeoMxWorkflows/inst/doc/GeomxTools_RNA-NGS_Analysis.html#Analyzing_GeoMx-#NGS_RNA_Expression_Data_with_GeomxTools
+
+DCCFiles <- dir(file.path("/rds/projects/c/croftap-visium-manuscript-01/Geomix_synovium/DCC_files_plateALL"), pattern = ".dcc$",
+                full.names = TRUE, recursive = TRUE)
+
+PKCFiles <- dir(file.path("/rds/projects/c/croftap-visium-manuscript-01/Geomix_synovium/"), pattern = ".pkc$",
+                                full.names = TRUE, recursive = TRUE)
+SampleAnnotationFile <-
+    dir("/rds/projects/c/croftap-visium-manuscript-01/Geomix_synovium/Annie_2_20231213T1200_REVERSE/", pattern = "sample_sheetNEW2.xlsx",
+        full.names = TRUE, recursive = TRUE)
+
+#####
+demoData <-
+    readNanoStringGeoMxSet(dccFiles = DCCFiles,
+                           pkcFiles = PKCFiles,
+                           phenoDataFile = SampleAnnotationFile,
+                               phenoDataDccColName = "Sample_ID",
+                           phenoDataSheet = "Annie 2_20231213T1200_LabWorksh",#must match name of sheet in excel
+                           protocolDataColNames = c("Conditon", "Annotation_initial"),
+                           experimentDataColNames = c("panel"))
+
+library(knitr)
+pkcs <- annotation(demoData)
+modules <- gsub(".pkc", "", pkcs)
+kable(data.frame(PKCs = pkcs, modules = modules))
+
+demoData <- shiftCountsOne(demoData, useDALogic = TRUE)
+
+QC_params <-
+    list(minSegmentReads = 1000, # Minimum number of reads (1000)
+         percentTrimmed = 80,    # Minimum % of reads trimmed (80%)
+         percentStitched = 80,   # Minimum % of reads stitched (80%)
+         percentAligned = 75,    # Minimum % of reads aligned (80%)
+         percentSaturation = 50, # Minimum sequencing saturation (50%)
+         minNegativeCount = 1,   # Minimum negative control counts (10)
+         maxNTCCount = 9000,     # Maximum counts observed in NTC well (1000)
+         minNuclei = 8,         # Minimum # of nuclei estimated (100)
+         minArea = 600)         # Minimum segment area (5000)
+demoData <-
+    setSegmentQCFlags(demoData, 
+                      qcCutoffs = QC_params)        
+
+# Collate QC Results
+QCResults <- protocolData(demoData)[["QCFlags"]]
+flag_columns <- colnames(QCResults)
+QC_Summary <- data.frame(Pass = colSums(!QCResults[, flag_columns]),
+                         Warning = colSums(QCResults[, flag_columns]))
+QCResults$QCStatus <- apply(QCResults, 1L, function(x) {
+    ifelse(sum(x) == 0L, "PASS", "WARNING")
+})
+QC_Summary["TOTAL FLAGS", ] <-
+    c(sum(QCResults[, "QCStatus"] == "PASS"),
+      sum(QCResults[, "QCStatus"] == "WARNING"))
+
+library(ggplot2)
+
+col_by <- "Annotation_initial"
+
+# Graphical summaries of QC statistics plot function
+QC_histogram <- function(assay_data = NULL,
+                         annotation = NULL,
+                         fill_by = NULL,
+                         thr = NULL,
+                         scale_trans = NULL) {
+    plt <- ggplot(assay_data,
+                  aes_string(x = paste0("unlist(`", annotation, "`)"),
+                             fill = fill_by)) +
+        geom_histogram(bins = 50) +
+        geom_vline(xintercept = thr, lty = "dashed", color = "black") +
+        theme_bw() + guides(fill = "none") +
+        facet_wrap(as.formula(paste("~", fill_by)), nrow = 4) +
+        labs(x = annotation, y = "Segments, #", title = annotation)
+    if(!is.null(scale_trans)) {
+        plt <- plt +
+            scale_x_continuous(trans = scale_trans)
+    }
+    plt
+}
+
+
+QC_histogram(sData(demoData), "Trimmed (%)", col_by, 80)
+QC_histogram(sData(demoData), "Stitched (%)", col_by, 80)
+QC_histogram(sData(demoData), "Aligned (%)", col_by, 75)
+QC_histogram(sData(demoData), "Saturated (%)", col_by, 50) +
+    labs(title = "Sequencing Saturation (%)",
+         x = "Sequencing Saturation (%)")
+
+QC_histogram(sData(demoData), "area", col_by, 600, scale_trans = "log10")
+QC_histogram(sData(demoData), "nuclei", col_by, 8)
+
+
+```
+```{r}
+negativeGeoMeans <- 
+    esBy(negativeControlSubset(demoData), 
+         GROUP = "Module", 
+         FUN = function(x) { 
+             assayDataApply(x, MARGIN = 2, FUN = ngeoMean, elt = "exprs") 
+         }) 
+protocolData(demoData)[["NegGeoMean"]] <- negativeGeoMeans
+
+# explicitly copy the Negative geoMeans from sData to pData
+negCols <- paste0("NegGeoMean_", modules)
+pData(demoData)[, negCols] <- sData(demoData)[["NegGeoMean"]]
+for(ann in negCols) {
+    plt <- QC_histogram(pData(demoData), ann, "Annotation_initial2", 2, scale_trans = "log10")
+    print(plt)
+}
+
+plt
+```
+```{r}
+
+col_by <- "Annotation_initial2"
+
+pData(demoData) <- pData(demoData)[, !colnames(pData(demoData)) %in% negCols]
+
+### show all NTC values, Freq = # of Segments with a given NTC count:
+kable(table(NTC_Count = sData(demoData)$NTC),
+      col.names = c("NTC Count", "# of Segments"))
+
+kable(QC_Summary, caption = "QC Summary Table for each Segment")
+
+
+## Remove Flagged segments
+passedQC <- demoData[, QCResults$QCStatus == "PASS"]
+
+### Subsetting our dataset has removed samples which did not pass QC
+dim(demoData)
+dim(passedQC)
+demoData <- passedQC
+
+# Probe QC
+## Set QC Flags
+### Generally keep the qcCutoffs parameters unchanged. Set removeLocalOutliers to 
+### FALSE if you do not want to remove local outliers
+demoData <- setBioProbeQCFlags(demoData, 
+                               qcCutoffs = list(minProbeRatio = 0.1, percentFailGrubbs = 20), 
+                               removeLocalOutliers = F)
+
+ProbeQCResults <- fData(demoData)[["QCFlags"]]
+
+### Define QC table for Probe QC
+qc_df <- data.frame(Passed = sum(rowSums(ProbeQCResults[, -1]) == 0),
+                    Global = sum(ProbeQCResults$GlobalGrubbsOutlier),
+                    Local = sum(rowSums(ProbeQCResults[, -2:-1]) > 0
+                                & !ProbeQCResults$GlobalGrubbsOutlier))
+## Exclude Outliers
+### Subset object to exclude all that did not pass Ratio & Global testing
+ProbeQCPassed <- subset(demoData, 
+                        fData(demoData)[["QCFlags"]][,c("LowProbeRatio")] == F &
+                          fData(demoData)[["QCFlags"]][,c("GlobalGrubbsOutlier")] == F)
+dim(ProbeQCPassed)
+
+demoData <- ProbeQCPassed 
+
+
+# Create Gene-level Count Data
+## Check how many unique targets the object has
+length(unique(featureData(demoData)[["TargetName"]]))
+
+### collapse to targets
+target_demoData <- aggregateCounts(demoData)
+dim(target_demoData)
+
+# exprs(target_demoData)[1:5, 1:2]
+
+# Limit of Quantification (LOQ)
+### Define LOQ SD threshold and minimum value
+cutoff <- 2
+minLOQ <- 2
+
+## Calculate LOQ per module tested
+LOQ <- data.frame(row.names = colnames(target_demoData))
+for(module in modules) {
+  vars <- paste0(c("NegGeoMean_", "NegGeoSD_"),
+                 module)
+  if(all(vars[1:2] %in% colnames(pData(target_demoData)))) {
+    LOQ[, module] <-
+      pmax(minLOQ,
+           pData(target_demoData)[, vars[1]] * 
+             pData(target_demoData)[, vars[2]] ^ cutoff)
+  }
+}
+pData(target_demoData)$LOQ <- LOQ
+
+# Filtering
+LOQ_Mat <- c()
+for(module in modules) {
+  ind <- fData(target_demoData)$Module == module
+  Mat_i <- t(esApply(target_demoData[ind, ], MARGIN = 1,
+                     FUN = function(x) {
+                       x > LOQ[, module]
+                     }))
+  LOQ_Mat <- rbind(LOQ_Mat, Mat_i)
+}
+### ensure ordering since this is stored outside of the geomxSet
+LOQ_Mat <- LOQ_Mat[fData(target_demoData)$TargetName, ]
+
+## Segment Gene Detection
+### Save detection rate information to pheno data
+pData(target_demoData)$GenesDetected <- colSums(LOQ_Mat, na.rm = T)
+pData(target_demoData)$GeneDetectionRate <- pData(target_demoData)$GenesDetected / nrow(target_demoData)
+
+### Determine detection thresholds: 1%, 5%, 10%, 15%, >15%
+pData(target_demoData)$DetectionThreshold <- 
+  cut(pData(target_demoData)$GeneDetectionRate,
+      breaks = c(0, 0.01, 0.05, 0.1, 0.15, 1),
+      labels = c("<1%", "1-5%", "5-10%", "10-15%", ">15%"))
+
+### stacked bar plot of different cut points (1%, 5%, 10%, 15%)
+ggplot(pData(target_demoData),
+       aes(x = DetectionThreshold)) +
+  geom_bar(aes(fill = `Annotation_initial2`)) +
+  geom_text(stat = "count", aes(label = after_stat(count)), vjust = -0.5) +
+  theme_bw() +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(x = "Gene Detection Rate",
+       y = "Segments, #",
+       fill = "Segment Type")
+```
+
+
+```{r}
+### cut percent genes detected at 1, 5, 10, 15
+kable(table(pData(target_demoData)$DetectionThreshold,
+            pData(target_demoData)$segment))
+
+## Filter (generally 5-10% is a good filer, but might need adjusting)
+target_demoData <- target_demoData[, pData(target_demoData)$GeneDetectionRate >= .1] # In the vignette, they do 10% of Genes
+
+dim(target_demoData)
+
+
+## Gene Detection Rate
+library(scales) # for percent
+
+### Calculate detection rate:
+LOQ_Mat <- LOQ_Mat[, colnames(target_demoData)]
+fData(target_demoData)$DetectedSegments <- rowSums(LOQ_Mat, na.rm = T)
+fData(target_demoData)$DetectionRate <-
+  fData(target_demoData)$DetectedSegments / nrow(pData(target_demoData))
+
+### Gene of interest detection table
+goi <- c("PDCD1", "CD274", "IFNG", "CD8A", "CD68", "RORC",
+         "KRT18", "NPHS1", "NPHS2", "CALB1", "CLDN8")
+goi_df <- data.frame(
+  Gene = goi,
+  Number = fData(target_demoData)[goi, "DetectedSegments"],
+  DetectionRate = percent(fData(target_demoData)[goi, "DetectionRate"]))
+
+head(goi_df)
+
+
+
+## Gene Filtering
+### Plot detection rate:
+plot_detect <- data.frame(Freq = c(1, 5, 10, 20, 30, 50))
+plot_detect$Number <- unlist(lapply(c(0.01, 0.05, 0.1, 0.2, 0.3, 0.5),
+                function(x) {sum(fData(target_demoData)$DetectionRate >= x)}))
+plot_detect$Rate <- plot_detect$Number / nrow(fData(target_demoData))
+rownames(plot_detect) <- plot_detect$Freq
+
+ggplot(plot_detect, aes(x = as.factor(Freq), y = Rate, fill = Rate)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = formatC(Number, format = "d", big.mark = ",")),
+            vjust = 1.6, color = "black", size = 4) +
+  scale_fill_gradient2(low = "orange2", mid = "lightblue",
+                       high = "dodgerblue3", midpoint = 0.65,
+                       limits = c(0,1),
+                       labels = scales::percent) +
+  theme_bw() +
+  scale_y_continuous(labels = scales::percent, limits = c(0,1),
+                     expand = expansion(mult = c(0, 0))) +
+  labs(x = "% of Segments",
+       y = "Genes Detected, % of Panel > LOQ")
+
+
+### Subset to target genes detected in at least 10% of the samples.
+###   Also manually include the negative control probe, for downstream use
+negativeProbefData <- subset(fData(target_demoData), CodeClass == "Negative")
+neg_probes <- unique(negativeProbefData$TargetName)
+target_demoData <- target_demoData[fData(target_demoData)$DetectionRate >= 0.1 |
+                    fData(target_demoData)$TargetName %in% neg_probes, ]
+dim(target_demoData)
+
+### retain only detected genes of interest
+goi <- goi[goi %in% rownames(target_demoData)]
+```
+
+
+```{r}
+# Normalisation --------------------------------------------------------------
+library(reshape2)  # for melt
+library(cowplot)   # for plot_grid
+
+head(pData(target_demoData))
+# Graph Q3 value vs negGeoMean of Negatives
+ann_of_interest <- "Annotation_initial2"
+Stat_data <- data.frame(row.names = colnames(exprs(target_demoData)),
+             Segment = colnames(exprs(target_demoData)),
+             Annotation = pData(target_demoData)[, ann_of_interest],
+             Q3 = unlist(apply(exprs(target_demoData), 2,
+                               quantile, 0.75, na.rm = T)),
+             NegProbe = exprs(target_demoData)[neg_probes, ])
+Stat_data_m <- melt(Stat_data, measure.vars = c("Q3", "NegProbe"),
+                    variable.name = "Statistic", value.name = "Value")
+
+plt1 <- ggplot(Stat_data_m,
+               aes(x = Value, fill = Statistic)) +
+  geom_histogram(bins = 40) + theme_bw() +
+  scale_x_continuous(trans = "log2") +
+  facet_wrap(~Annotation, nrow = 1) + 
+  scale_fill_brewer(palette = 3, type = "qual") +
+  labs(x = "Counts", y = "Segments, #")
+
+plt2 <- ggplot(Stat_data,
+               aes(x = NegProbe, y = Q3, color = Annotation)) +
+  geom_abline(intercept = 0, slope = 1, lty = "dashed", color = "darkgray") +
+  geom_point() + guides(color = "none") + theme_bw() +
+  scale_x_continuous(trans = "log2") + 
+  scale_y_continuous(trans = "log2") +
+  theme(aspect.ratio = 1) +
+  labs(x = "Negative Probe GeoMean, Counts", y = "Q3 Value, Counts")
+
+plt3 <- ggplot(Stat_data,
+               aes(x = NegProbe, y = Q3 / NegProbe, color = Annotation)) +
+  geom_hline(yintercept = 1, lty = "dashed", color = "darkgray") +
+  geom_point() + theme_bw() +
+  scale_x_continuous(trans = "log2") + 
+  scale_y_continuous(trans = "log2") +
+  theme(aspect.ratio = 1) +
+  labs(x = "Negative Probe GeoMean, Counts", y = "Q3/NegProbe Value, Counts")
+
+btm_row <- plot_grid(plt2, plt3, nrow = 1, labels = c("B", ""),
+                     rel_widths = c(0.43,0.57))
+plot_grid(plt1, btm_row, ncol = 1, labels = c("A", "")) # Separation of Q3 & NegProbe (there's a "shift" of the Q3 away from the NegProbe)
+
+
+## Perform Normalisation (data structure can hold both, but need to take note of the "toElt" argument)
+# Q3 norm (75th percentile) for WTA/CTA  with or without custom spike-ins
+target_demoData <- normalize(target_demoData,
+                             norm_method = "quant", 
+                             desiredQuantile = .75,
+                             toElt = "q_norm")
+
+# Background normalization for WTA/CTA without custom spike-in
+target_demoData <- normalize(target_demoData ,
+                             norm_method = "neg",
+                             fromElt = "exprs",
+                             toElt = "neg_norm")
+
+## Visualise
+### visualize the first 10 segments with each normalization method
+boxplot(exprs(target_demoData)[,1:10],
+        col = "#9EDAE5", main = "Raw Counts",
+        log = "y", names = 1:10, xlab = "Segment",
+        ylab = "Counts, Raw")
+
+### Q3
+boxplot(assayDataElement(target_demoData[,1:10], elt = "q_norm"),
+        col = "#2CA02C", main = "Q3 Norm Counts",
+        log = "y", names = 1:10, xlab = "Segment",
+        ylab = "Counts, Q3 Normalized")
+
+### Background
+boxplot(assayDataElement(target_demoData[,1:10], elt = "neg_norm"),
+        col = "#FF7F0E", main = "Neg Norm Counts",
+        log = "y", names = 1:10, xlab = "Segment",
+        ylab = "Counts, Neg. Normalized")
+
+
+```
+```{r}
+# Unsupervised Analysis ----------
+##UMAPS
+# install.packages("umap")
+library(umap)
+library(Rtsne)
+
+# update defaults for umap to contain a stable random_state (seed)
+custom_umap <- umap::umap.defaults
+custom_umap$random_state <- 42
+
+# run UMAP
+umap_out <- umap(t(log2(assayDataElement(target_demoData , elt = "q_norm"))), config = custom_umap)
+pData(target_demoData)[, c("UMAP1", "UMAP2")] <- umap_out$layout[, c(1,2)]
+ggplot(pData(target_demoData),
+       aes(x = UMAP1, y = UMAP2, color = `Annotation_initial2`)) +
+  geom_point(size = 3) +
+  theme_bw()
+
+## tSNE
+# run tSNE
+set.seed(42) # set the seed for tSNE as well
+tsne_out <- Rtsne(t(log2(assayDataElement(target_demoData , elt = "q_norm"))),
+        perplexity = ncol(target_demoData)*.15)
+pData(target_demoData)[, c("tSNE1", "tSNE2")] <- tsne_out$Y[, c(1,2)]
+ggplot(pData(target_demoData),
+       aes(x = tSNE1, y = tSNE2, color = `Annotation_initial2`)) +
+  geom_point(size = 3) +
+  theme_bw()
+
+```
+
+```{r}
+library(pheatmap)  # for pheatmap
+# create a log2 transform of the data for analysis
+assayDataElement(object = target_demoData, elt = "log_q") <-
+    assayDataApply(target_demoData, 2, FUN = log, base = 2, elt = "q_norm")
+
+# create CV function
+calc_CV <- function(x) {sd(x) / mean(x)}
+CV_dat <- assayDataApply(target_demoData,
+                         elt = "log_q", MARGIN = 1, calc_CV)
+# show the highest CD genes and their CV values
+sort(CV_dat, decreasing = TRUE)[1:5]
+#>   CAMK2N1    AKR1C1      AQP2     GDF15       REN 
+#> 0.5886006 0.5114973 0.4607206 0.4196469 0.4193216
+
+# Identify genes in the top 3rd of the CV values
+GOI <- names(CV_dat)[CV_dat > quantile(CV_dat, 0.8)]
+pheatmap(assayDataElement(target_demoData[GOI, ], elt = "log_q"),
+         scale = "row", 
+         show_rownames = FALSE, show_colnames = FALSE,
+         border_color = NA,
+       breaks = seq(-3, 3, 0.05),
+         color = colorRampPalette(c("purple3", "black", "yellow2"))(120),
+         annotation_col = 
+             pData(target_demoData)[, c("Annotation_initial2", "Conditon2")])
+
+pheatmap(assayDataElement(target_demoData[c("PTPRC", "COL1A1", "COL4A1","COL6A1", "COL3A1",  "PECAM1",  "CCL21",  "CCL19", "CXCL14", "CXCL13",  "COL1A2", "COL5A2", "COL6A2", "COL6A3", "COL12A1"), ], elt = "log_q"),
+         scale = "row", 
+         show_rownames = T, show_colnames = FALSE,
+         border_color = NA,
+       breaks = seq(-3, 3, 0.05),
+         color = colorRampPalette(c("purple3", "black", "yellow2"))(120),
+         annotation_col = 
+             pData(target_demoData)[, c("Annotation_initial2", "Conditon2")])
+
+
+ pheatmap(assayDataElement(target_demoData[c("PTPRC", "COL1A1", "COL4A1","COL6A1", "COL3A1",  "PECAM1",  "CCL21",  "CCL19", "CXCL14", "CXCL13",  "COL1A2", "COL5A2", "COL6A2", "COL6A3", "COL12A1"), ], elt = "log_q"),
+         scale = "row", 
+         show_rownames = T, show_colnames = T,
+         border_color = NA,
+         clustering_method = "average",
+         clustering_distance_rows = "correlation",
+         clustering_distance_cols = "correlation",
+         breaks = seq(-3, 3, 0.05),
+         color = colorRampPalette(c("purple3", "black", "yellow2"))(120),
+         annotation_col = 
+             pData(target_demoData)[, c("Annotation_initial2", "Conditon2")])
+
+expr_mat <- assayDataElement(target_demoData, elt = "log_q")
+
+length(rownames(expr_mat))
+
+colnames(expr_mat)
+
+rownames(expr_mat)[grep("COL", rownames(expr_mat))]
+
+expr_mat[c("PTPRC", "COL1A1", "COL4A1","COL6A1",  "CCL19", "PECAM1", "NOTCH3", "RUNX1"),] %>% Heatmap()
+
+expr_mat %>% colnames()
+
+
+
+
+```
+
+```{r}
+# DEX next step gemoix: https://bioconductor.org/packages/release/workflows/vignettes/GeoMxWorkflows/inst/doc/GeomxTools_RNA-NGS_Analysis.html#Analyzing_GeoMx-NGS_RNA_Expression_Data_with_GeomxTools
+```
+
+```{r}
+pData(target_demoData)$testRegion <- 
+    factor(pData(target_demoData)$Annotation_initial2, c("Low_CD45", "High_CD45"))
+pData(target_demoData)[["slide"]] <- 
+    factor(pData(target_demoData)[["slide name"]])
+assayDataElement(object = target_demoData, elt = "log_q") <-
+    assayDataApply(target_demoData, 2, FUN = log, base = 2, elt = "q_norm")
+
+mixedOutmc <-
+        mixedModelDE(target_demoData,
+                     elt = "log_q",
+                     modelFormula = ~ testRegion + (1 + testRegion | slide),
+                     groupVar = "testRegion",
+                     nCores = 1,
+                     multiCore = F)
+
+# run LMM:
+# formula follows conventions defined by the lme4 package
+results <- c()
+for(status in c("LM", "PI")) {
+    ind <- pData(target_demoData)$Conditon2 == status
+    mixedOutmc <-
+        mixedModelDE(target_demoData[, ind],
+                     elt = "log_q",
+                     modelFormula = ~ testRegion + (1 + testRegion | slide),
+                     groupVar = "testRegion",
+                     nCores = 1,
+                     multiCore = F)
+    
+    # format results as data.frame
+    r_test <- do.call(rbind, mixedOutmc["lsmeans", ])
+    tests <- rownames(r_test)
+    r_test <- as.data.frame(r_test)
+    r_test$Contrast <- tests
+    
+    # use lapply in case you have multiple levels of your test factor to
+    # correctly associate gene name with it's row in the results table
+    r_test$Gene <- 
+        unlist(lapply(colnames(mixedOutmc),
+                      rep, nrow(mixedOutmc["lsmeans", ][[1]])))
+    r_test$Subset <- status
+    r_test$FDR <- p.adjust(r_test$`Pr(>|t|)`, method = "fdr")
+    r_test <- r_test[, c("Gene", "Subset", "Contrast", "Estimate", 
+                         "Pr(>|t|)", "FDR")]
+    results <- rbind(results, r_test)
+}
+save.image("/rds/projects/c/croftap-visium-manuscript-01/Geomix_synovium/analysis/analysis.RData")
+
+
+
+```
+
+
+
+
+
+```{r}
+library(ggrepel) 
+# Categorize Results based on P-value & FDR for plotting
+results$Color <- "NS or FC < 0.5"
+results$Color[results$`Pr(>|t|)` < 0.05] <- "P < 0.05"
+results$Color[results$FDR < 0.05] <- "FDR < 0.05"
+results$Color[results$FDR < 0.001] <- "FDR < 0.001"
+results$Color[abs(results$Estimate) < 0.5] <- "NS or FC < 0.5"
+results$Color <- factor(results$Color,
+                        levels = c("NS or FC < 0.5", "P < 0.05",
+                                   "FDR < 0.05", "FDR < 0.001"))
+
+# pick top genes for either side of volcano to label
+# order genes for convenience:
+results$invert_P <- (-log10(results$`Pr(>|t|)`)) * sign(results$Estimate)
+top_g <- c()
+for(cond in c("LM")) {
+    ind <- results$Subset == cond
+    top_g <- c(top_g,
+               results[ind, 'Gene'][
+                   order(results[ind, 'invert_P'], decreasing = TRUE)[1:15]],
+               results[ind, 'Gene'][
+                   order(results[ind, 'invert_P'], decreasing = FALSE)[1:15]])
+}
+top_g <- unique(top_g)
+results <- results[, -1*ncol(results)] # remove invert_P from matrix
+
+# Graph results
+ggplot(results,
+       aes(x = Estimate, y = -log10(`Pr(>|t|)`),
+           color = Color, label = Gene)) +
+    geom_vline(xintercept = c(0.5, -0.5), lty = "dashed") +
+    geom_hline(yintercept = -log10(0.05), lty = "dashed") +
+    geom_point() +
+    labs(x = "Enriched in Tubules <- log2(FC) -> Enriched in Glomeruli",
+         y = "Significance, -log10(P)",
+         color = "Significance") +
+    scale_color_manual(values = c(`FDR < 0.001` = "dodgerblue",
+                                  `FDR < 0.05` = "lightblue",
+                                  `P < 0.05` = "orange2",
+                                  `NS or FC < 0.5` = "gray"),
+                       guide = guide_legend(override.aes = list(size = 4))) +
+    scale_y_continuous(expand = expansion(mult = c(0,0.05))) +
+    geom_text_repel(data = subset(results, Gene %in% top_g & `Pr(>|t|)` < 0.05),
+                    size = 4, point.padding = 0.15, color = "black",
+                    min.segment.length = .1, box.padding = .2, lwd = 2,
+                    max.overlaps = 50) +
+    theme_bw(base_size = 16) +
+    theme(legend.position = "bottom") +
+    facet_wrap(~Subset, scales = "free_y")
+```
+
+
+
+
+
+
+
+
+```{r}
+
+#get CD31 mean expr
+sample_sheetNEW2 <- read_excel("/rds/projects/c/croftap-visium-manuscript-01/Geomix_synovium/Annie_2_20231213T1200_REVERSE/sample_sheetNEW2.xlsx")
+
+sample_sheetNEW2_CD31 <- sample_sheetNEW2 %>% filter(Annotation_initial =="CD31_cont" )
+
+mat <- assayDataElement(target_demoData[c("PECAM1"), ], elt = "log_q")
+mat <- mat %>% as.data.frame()
+
+colnames(mat) <-sub(".dcc","", colnames(mat))
+
+
+mat <- mat[,colnames(mat) %in%sample_sheetNEW2_CD31$Sample_ID ]
+mat <- mat %>% t() %>% as.data.frame()
+
+
+
+
+limit=mean(mat$PECAM1)-sd(mat$PECAM1)
+
+
+
+mat <- assayDataElement(target_demoData[c("PECAM1"), ], elt = "log_q")
+mat <- mat %>% t() %>% as.data.frame()
+mat %>% filter(PECAM1 < limit)
+
+
+mat <- assayDataElement(target_demoData[c("PTPRC", "PECAM1"), ], elt = "log_q")
+mat <- mat %>% t() %>% as.data.frame() 
+meta <- target_demoData@phenoData@data %>% as.data.frame()
+mat$Annotation_initial2  <- meta$Annotation_initial2
+mat$Conditon2  <- meta$Conditon2
+mat <- mat %>% filter(PECAM1 < limit & Annotation_initial2 != 'CD31_cont')
+
+
+rownames(mat) <-sub(".dcc","", rownames(mat))
+
+index <- match(rownames(mat), all_samples_beth_check$Sample_ID)
+mat$collagen <- all_samples_beth_check$collagen[index]
+
+sample_sheet_Beth_additions_best30$...1 <-sub(".dcc","", sample_sheet_Beth_additions_best30$...1)
+
+index <- match(rownames(mat), sample_sheet_Beth_additions_best30$...1)
+mat$cellsum_corected <- sample_sheet_Beth_additions_best30$cellsum_corected[index]
+
+write.csv(mat, "/rds/projects/c/croftap-visium-manuscript-01/Geomix_synovium/analysis/all68_samples_with_expr.csv")
+
+hist(mat$PTPRC)
+
+mat %>% filter(PECAM1 < limit)
+
+
+
+
+
+
+```
+
+
+```{r}
+sample_sheetNEW2 <- sample_sheetNEW2[sample_sheetNEW2$Sample_ID %in% gsub(".dcc","", colnames(expr_mat)),]
+
+
+sample_sheetNEW2$collagen <- c("high", "low", "low", "high", "low")
+
+sample_sheet_Beth_additions_best30$...1 <- paste0(sample_sheet_Beth_additions_best30$...1, ".dcc")
+
+mat <- assayDataElement(target_demoData[c("COL6A1"), ], elt = "log_q")
+
+
+mat <- assayDataElement(target_demoData[c("PTPRC", "COL1A1", "COL4A1","COL6A1", "COL3A1",  "PECAM1",  "CCL21",  "CCL19", "CXCL14", "CXCL13",  "COL1A2", "COL5A2", "COL6A2", "COL6A3", "COL12A1", "CXCL1", "SPARC"), ], elt = "log_q")
+
+sample_sheet_Beth_additions_best30$...1
+
+mat[,"DSP-1001660017946-B-E06.dcc"]
+
+mat <- mat[,colnames(mat) %in% sample_sheet_Beth_additions_best30$...1]
+
+target_demoData_f <- target_demoData[,sample_sheet_Beth_additions_best30$...1]
+
+ncol(mat)
+
+#findsamples for beth
+colnames(expr_mat)
+colnames(target_demoData_f)
+
+to_keep <- colnames(expr_mat)[!colnames(expr_mat) %in% colnames(target_demoData_f)]
+
+to_keep <-sub(".dcc","", to_keep)
+
+all_samples_beth_check <- all_samples_beth[all_samples_beth$Sample_ID %in% to_keep,]
+
+to_keep <- colnames(expr_mat)[!colnames(expr_mat) %in% colnames(target_demoData_f)]
+
+
+
+
+mat <- assayDataElement(target_demoData[c("PTPRC"), ], elt = "log_q")
+mat <- mat[,colnames(mat) %in% to_keep]
+mat <- mat %>% as.data.frame()
+all_samples_beth_check$CD45_expr <- mat$.
+
+mat <- assayDataElement(target_demoData[c("COL1A1"), ], elt = "log_q")
+mat <- mat[,colnames(mat) %in% to_keep]
+mat <- mat %>% as.data.frame()
+all_samples_beth_check$COL1A1_expr <- mat$.
+
+mat <- assayDataElement(target_demoData[c("PECAM1"), ], elt = "log_q")
+mat <- mat[,colnames(mat) %in% to_keep]
+mat <- mat %>% as.data.frame()
+all_samples_beth_check$PECAM1_expr <- mat$.
+
+median(all_samples_beth_check$PECAM1_expr)
+
+write.csv(all_samples_beth_check, "/rds/projects/c/croftap-visium-manuscript-01/Geomix_synovium/analysis/all_samples_beth_check.csv")
+
+
+colnames(expr_mat)
+colnames(target_demoData_f)
+
+to_keep <- colnames(expr_mat)[colnames(expr_mat) %in% colnames(target_demoData_f)]
+
+to_keep <-sub(".dcc","", to_keep)
+
+all_samples_beth_check <- all_samples_beth[all_samples_beth$Sample_ID %in% to_keep,]
+
+to_keep <- colnames(expr_mat)[colnames(expr_mat) %in% colnames(target_demoData_f)]
+
+mat <- assayDataElement(target_demoData[c("PTPRC"), ], elt = "log_q")
+mat <- mat[,colnames(mat) %in% to_keep]
+mat <- mat %>% as.data.frame()
+all_samples_beth_check$CD45_expr <- mat$.
+
+mat <- assayDataElement(target_demoData[c("COL1A1"), ], elt = "log_q")
+mat <- mat[,colnames(mat) %in% to_keep]
+mat <- mat %>% as.data.frame()
+all_samples_beth_check$COL1A1_expr <- mat$.
+
+all_samples_beth_check$collagen <- c("low", "high", "CD45", "low", "low", "high", "high", "low", "high", "endo", "high", "endo",  "endo", "low", "endo", "high", "high","low", "high", "high","high", "low",  "low", "low", "high", "low", "low", "high", "high", "high")
+
+
+write.csv(all_samples_beth_check, "/rds/projects/c/croftap-visium-manuscript-01/Geomix_synovium/analysis/all_samples_beth_check_30best.csv")
+
+
+mat <- assayDataElement(target_demoData[c("PTPRC", "COL1A1", "COL4A1","COL6A1", "COL3A1",  "PECAM1",  "CCL21",  "CCL19", "CXCL14", "CXCL13",  "COL1A2", "COL5A2", "COL6A2", "COL6A3", "COL12A1", "CXCL1", "SPARC"), ], elt = "log_q")
+
+mat <- mat[,colnames(mat) %in% sample_sheet_Beth_additions_best30$...1]
+
+ht1 <- pheatmap(mat,
+         scale = "row", 
+         show_rownames = T, show_colnames = T,
+         border_color = NA,
+         clustering_method = "average",
+         clustering_distance_rows = "correlation",
+         clustering_distance_cols = "correlation",
+         breaks = seq(-3, 3, 0.05),
+         color = colorRampPalette(c("purple3", "black", "yellow2"))(120),
+         annotation_col = 
+             pData(target_demoData_f)[, c("Annotation_initial2", "Conditon2")] )
+
+
+pheatmap(mat,
+         scale = "row", 
+         show_rownames = T, show_colnames = T,
+         border_color = NA,
+         clustering_method = "average",
+         clustering_distance_rows = "correlation",
+         clustering_distance_cols = "correlation",
+         breaks = seq(-3, 3, 0.05),
+         color = colorRampPalette(c("purple3", "black", "yellow2"))(120),
+         annotation_col = 
+             pData(target_demoData_f)[, c("Annotation_initial2", "Conditon2", "new_anno")], cluster_cols = F )
+
+
+ht1
+
+
+sample_sheet_Beth_additions_best30$collagen <- c("low", "high", "CD45", "low", "low", "high", "high", "low", "high", "endo", "high", "endo",  "endo", "low", "endo", "high", "high","low", "high", "high","high", "low",  "low", "low", "high", "low", "low", "high", "high", "high")
+
+
+sample_sheet_Beth_additions_best30$cellsum_corected <- sample_sheet_Beth_additions_best30$cellsum*10000
+
+
+target_demoData_f@phenoData@data$new_anno <- sample_sheet_Beth_additions_best30$collagen
+
+
+library(dplyr)
+sample_sheet_Beth_additions_best30 <- sample_sheet_Beth_additions_best30 %>% mutate(cd45_new=ifelse(sample_sheet_Beth_additions_best30$cellsum_corected > 50, "high", "low"))
+
+sample_sheet_Beth_additions_best30_noPI <- sample_sheet_Beth_additions_best30[-c(1:5),]
+
+hist(sample_sheet_Beth_additions_best30_noPI$cellsum_corected)
+
+
+table(sample_sheet_Beth_additions_best30_noPI$collagen, sample_sheet_Beth_additions_best30_noPI$cd45_new)
+
+mean(sample_sheet_Beth_additions_best30$cellsum_corected)
+
+quantile(sample_sheet_Beth_additions_best30$cellsum_corected)
+
+library(splitstackshape)
+
+sample_sheet_Beth_additions_best30 <- cSplit(sample_sheet_Beth_additions_best30, splitCols = "...19", sep=" ")
+
+ht2 <- Heatmap(assayDataElement(target_demoData[c("PTPRC", "COL1A1", "COL4A1","COL6A1", "COL3A1",  "PECAM1",  "CCL21",  "CCL19", "CXCL14", "CXCL13",  "COL1A2", "COL5A2", "COL6A2", "COL6A3", "COL12A1", "SPARC"), ], elt = "log_q"))
+
+ht2
+library(ggpubr)
+sample_sheet_Beth_additions_best30_noPI %>% ggscatter(x = "total", y = "cellsum_corected",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson", label.x = -2, label.y = 10)
+
+
+pheatmap(mat,
+         scale = "row", 
+         show_rownames = T, show_colnames = T,
+         border_color = NA,
+         clustering_method = "average",
+         clustering_distance_rows = "correlation",
+         clustering_distance_cols = "correlation",
+         breaks = seq(-3, 3, 0.05),
+         color = colorRampPalette(c("purple3", "black", "yellow2"))(120),
+         annotation_col = 
+             pData(target_demoData_f)[, c("Annotation_initial2", "Conditon2", "new_anno")], cluster_cols = T  )
+
+
+
+assayDataElement(target_demoData[c("PTPRC", "COL1A1", "COL4A1","COL6A1", "COL3A1",  "PECAM1",  "CCL21",  "CCL19", "CXCL14", "CXCL13",  "COL1A2", "COL5A2", "COL6A2", "COL6A3", "COL12A1"), sample_sheet_Beth_additions_best30$Sample_ID_new ], elt = "log_q")
+
+```
+```{r}
+
+table(sample_sheet_Beth_additions_best30$...20, sample_sheet_Beth_additions_best30$collagen)
+
+
+
+```
+
+
+
+```{r}
+
+sample_sheet_Beth_additions_best30 %>% filter(collagen == "high"|collagen=="low") %>% ggplot(aes(x=collagen, y=cellsum)) + 
+  geom_violin()+geom_point(colour="blue",size=5)
+
+
+```
+```{r}
+pheatmap(assayDataElement(target_demoData[c("PTPRC", "COL1A1", "COL4A1","COL6A1", "COL3A1",  "PECAM1",  "CCL21",  "CCL19", "CXCL14", "CXCL13",  "COL1A2", "COL5A2", "COL6A2", "COL6A3", "COL12A1"), ], elt = "log_q"),
+         scale = "row", 
+         show_rownames = T, show_colnames = T,
+         border_color = NA,
+         clustering_method = "average",
+         clustering_distance_rows = "correlation",
+         clustering_distance_cols = "correlation",
+         breaks = seq(-3, 3, 0.05),
+         color = colorRampPalette(c("purple3", "black", "yellow2"))(120),
+         annotation_col = 
+             pData(target_demoData)[, c("Annotation_initial2", "Conditon2")])
+```
+
+```{r}
+
+Copy_of_sample_sheet_Beth_additions_45 %>% nrow
+
+mat <- assayDataElement(target_demoData[c("COL1A1", "COL4A1","COL6A1", "COL3A1",  "PECAM1",  "CCL21",  "CCL19", "CXCL14", "CXCL13",  "COL1A2", "COL5A2", "COL6A2", "COL6A3", "COL12A1", "CXCL1", "SPARC"), ], elt = "log_q")
+keep <- paste0(Copy_of_sample_sheet_Beth_additions_45$...1, ".dcc")
+  mat <- mat[,colnames(mat) %in% keep]
+  
+target_demoData_f2 <- target_demoData[,keep]
+
+ncol(target_demoData_f2)
+
+mat %>% ncol()
+pheatmap(mat,
+         scale = "row", 
+         show_rownames = T, show_colnames = F,
+         border_color = NA,
+         clustering_method = "average",
+         clustering_distance_rows = "correlation",
+         clustering_distance_cols = "correlation",
+         breaks = seq(-3, 3, 0.05),
+         color = colorRampPalette(c("purple3", "black", "yellow2"))(120),
+         annotation_col = 
+             pData(target_demoData_f2)[, c("Annotation_initial2", "Conditon2")])
+
+
+```
+
+```{r}
+
+mat %>% ncol
+
+target_demoData_f2 %>% ncol()
+
+target_demoData_f2@phenoData@data$new_anno <- c("remove", "remove", "low", "low", "low", "remove", "high", "high", "low", "low", "high", "cd31", "high", "cd31", "cd31","low", "low", "low", "high", "low", "cd31", "low", "high", "low", "low", "high", "high", "remove", "high", "high",  "high", "low", "low", "low", "low", "low", "high", "high","low","high","high","high","high","high", "low")
+
+df_1 <- data.frame(samples=colnames(mat), anno_new=target_demoData_f2@phenoData@data$new_anno)
+df_1 <-df_1 %>% dplyr::filter(anno_new != "remove" & anno_new != "cd31")
+keep2 <- df_1$samples
+
+target_demoData_f3 <- target_demoData[,keep2]
+
+mat_test <- assayDataElement(target_demoData_f3, elt = "log_q")
+
+
+
+
+mat <- assayDataElement(target_demoData_f3[c( "COL1A1", "COL4A1","COL6A1", "COL3A1",   "CCL21",  "CCL19", "CXCL14", "CXCL13",  "COL1A2", "COL5A2", "COL6A2", "COL6A3", "COL12A1", "CXCL1", "SPARC"), ], elt = "log_q")
+
+
+target_demoData_f3@phenoData@data$new_anno <- df_1$anno_new
+
+
+df_1_high <- df_1 %>% dplyr::filter(anno_new == "high")
+df_1_low <- df_1 %>% dplyr::filter(anno_new == "low")
+df_new <- rbind(df_1_high, df_1_low)
+
+mat %>% ncol()
+
+pheatmap(mat[,df_new$samples],
+         scale = "row", 
+         show_rownames = T, show_colnames = F, cluster_cols = F, cluster_rows = T,
+         border_color = NA,
+         clustering_method = "average",
+         clustering_distance_rows = "correlation",
+         clustering_distance_cols = "correlation",
+         breaks = seq(-3, 3, 0.05),
+         color = colorRampPalette(c("purple3", "black", "yellow2"))(120),
+         annotation_col = 
+             pData(target_demoData_f3)[, c("Annotation_initial2", "Conditon2", "new_anno")])
+
+
+
+
+
+
+
+
+
+```
+
+
+```{r}
+Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor <- Copy_of_sample_sheet_Beth_additions_45_amended$`cells/um"`*1000
+Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor[is.na(Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor)] <- 0
+
+
+Copy_of_sample_sheet_Beth_additions_45_amended$annotations <- c("remove", "remove", "low", "low", "low", "remove", "high", "high", "low", "low", "high", "cd31", "high", "cd31", "cd31","low", "low", "low", "high", "low", "cd31", "low", "high", "low", "low", "high", "high", "remove", "high", "high",  "high", "low", "low", "low", "low", "low", "high", "high","low","high","high","high","high","high", "low")
+```
+
+
+```{r}
+Copy_of_sample_sheet_Beth_additions_45_amended <- Copy_of_sample_sheet_Beth_additions_45_amended %>% dplyr::filter(annotations != "remove")
+
+
+check <- mat["COL1A1",] %>% as.data.frame()
+check$cellsum_corected <- Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor
+check$anno <- Copy_of_sample_sheet_Beth_additions_45_amended$...20
+check$collagen <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+
+
+library(ggpubr)
+check %>% dplyr::filter(anno != "CD31_cont") %>% dplyr::filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("COL1A1")
+
+library(ggpubr)
+check %>% dplyr::filter(anno != "CD31_cont") %>% dplyr::filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("COL1A1")+facet_wrap("collagen")
+
+
+
+check <- mat["CCL19",] %>% as.data.frame()
+check$cellsum_corected <- Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor
+check$anno <- Copy_of_sample_sheet_Beth_additions_45_amended$...20
+check$collagen <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+
+
+library(ggpubr)
+check %>% dplyr::filter(anno != "CD31_cont") %>% dplyr::filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("CCL19")
+
+check %>% dplyr::filter(anno != "CD31_cont") %>% dplyr::filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("CCL19")+facet_wrap("collagen")
+```
+
+
+```{r}
+
+check <- mat["COL1A1",] %>% as.data.frame()
+check$cellsum_corected <- Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor
+check$anno <- Copy_of_sample_sheet_Beth_additions_45_amended$...20
+check$collagen <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+library(ggpubr)
+p1 <- check %>% dplyr::filter(anno != "CD31_cont") %>% dplyr::filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("COL1A1")
+
+check %>% dplyr::filter(anno != "CD31_cont") %>% dplyr::filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("COL1A1")+facet_wrap("collagen")
+
+
+check <- mat["COL4A1",] %>% as.data.frame()
+check$cellsum_corected <- Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor
+check$anno <- Copy_of_sample_sheet_Beth_additions_45_amended$...20
+check$collagen <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+
+
+
+
+check <- mat["COL6A1",] %>% as.data.frame()
+check$cellsum_corected <- Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor
+check$anno <- Copy_of_sample_sheet_Beth_additions_45_amended$...20
+check$collagen <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+
+
+library(ggpubr)
+p2 <- check %>% dplyr::filter(anno != "CD31_cont") %>% dplyr::filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("COL6A1")
+
+check %>% filter(anno != "CD31_cont") %>% filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("COL6A1")+facet_wrap("collagen")
+
+
+mat <- assayDataElement(target_demoData_f3, elt = "log_q")
+
+
+check <- mat["COMP",] %>% as.data.frame()
+check$cellsum_corected <- Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor
+check$anno <- Copy_of_sample_sheet_Beth_additions_45_amended$...20
+check$collagen <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+
+
+
+
+
+library(ggpubr)
+p3 <- check %>% filter(anno != "CD31_cont") %>% filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("COMP")
+
+p3
+
+check %>% filter(anno != "CD31_cont") %>% filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("COL4A1")+facet_wrap("collagen")
+
+plot_grid(p1,p2,p3,ncol=3)
+
+
+p3
+
+```
+
+
+```{r}
+
+#MMP2"   "MMP9"   "MMP14"  "IMMP2L" "MMP1"   "MMP28"  "MMP3"
+
+rownames(mat_test)[grep("ADAM", rownames(mat_test))]
+
+
+gene="MMP2"
+check <- mat_test[gene,] %>% as.data.frame()
+check$cellsum_corected <- Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor
+check$anno <- Copy_of_sample_sheet_Beth_additions_45_amended$...20
+check$collagen <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+
+library(ggpubr)
+check %>% filter(anno != "CD31_cont") %>% filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle(gene)
+```
+
+
+
+
+
+```{r}
+
+
+#tgfb response
+
+
+cytokines <- dir("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/", pattern = "NS_new2.csv")
+
+cytokines_list <- list()
+for (i in 1:length(cytokines[c(3,6,7,8,9)])){
+  cytokines_list[[i]] <- read_csv(paste0("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/", cytokines[c(3,6,7,8,9)][[i]]))
+}
+names(cytokines_list) <- cytokines[c(3,6,7,8,9)]
+
+mat2 <- assayDataElement(target_demoData_f3, elt = "log_q") %>% as.data.frame()
+
+mat_av <- mat2[rownames(mat2) %in% cytokines_list[["TGFb_vs_NS_new2.csv"]][["gene"]],]
+
+mat_av <- apply(mat_av, 2, mean, na.rm = TRUE) %>% as.data.frame() %>% t() %>% as.data.frame() %>% t() %>% as.data.frame()
+
+#check <- mat["COL1A1",] %>% as.data.frame()
+mat_av$cellsum_corected <- Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor
+mat_av$anno <- Copy_of_sample_sheet_Beth_additions_45_amended$...20
+mat_av$collagen <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+
+target_demoData_f3@phenoData@data$new_anno2 <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+
+library(ggpubr)
+p3 <- mat_av %>% filter(anno != "TGFb_res") %>% filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("TGFbres")
+
+p3
+
+
+
+
+```
+
+
+
+
+```{r}
+
+All_markers_fig3_notch <- All_markers_fig3_notch %>% as.data.frame()
+rownames(All_markers_fig3_notch) <- All_markers_fig3_notch$...1
+
+mat2 <- assayDataElement(target_demoData_f3, elt = "log_q") %>% as.data.frame()
+
+NOTCH_genes <- All_markers_fig3_notch  %>% filter(cluster== "FLS_HUVEC") %>% head(40) %>% rownames()
+
+mat_av <- mat2[rownames(mat2) %in% NOTCH_genes,]
+
+mat_av <- apply(mat_av, 2, mean, na.rm = TRUE) %>% as.data.frame() %>% t() %>% as.data.frame() %>% t() %>% as.data.frame()
+
+#check <- mat["COL1A1",] %>% as.data.frame()
+mat_av$cellsum_corected <- Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor
+mat_av$anno <- Copy_of_sample_sheet_Beth_additions_45_amended$...20
+mat_av$collagen <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+
+
+library(ggpubr)
+p3 <- mat_av %>% filter(anno != "TGFb_res") %>% filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("NOTCH response")
+
+p3
+
+
+```
+
+
+
+```{r}
+
+
+check <- mat["CCL19",] %>% as.data.frame()
+check$cellsum_corected <- Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor
+check$anno <- Copy_of_sample_sheet_Beth_additions_45_amended$...20
+check$collagen <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+library(ggpubr)
+p4 <- check %>% filter(anno != "CD31_cont") %>% filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("CCL19")
+
+check %>% filter(anno != "CD31_cont") %>% filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("CCL19")+facet_wrap("collagen")
+
+
+
+check <- mat["CXCL13",] %>% as.data.frame()
+check$cellsum_corected <- Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor
+check$anno <- Copy_of_sample_sheet_Beth_additions_45_amended$...20
+check$collagen <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+
+
+library(ggpubr)
+p5 <- check %>% filter(anno != "CD31_cont") %>% filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("CXCL13")
+
+check %>% filter(anno != "CD31_cont") %>% filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("CXCL13")+facet_wrap("collagen")
+
+
+check <- mat["CXCL1",] %>% as.data.frame()
+check$cellsum_corected <- Copy_of_sample_sheet_Beth_additions_45_amended$cells_um_cor
+check$anno <- Copy_of_sample_sheet_Beth_additions_45_amended$...20
+check$collagen <- Copy_of_sample_sheet_Beth_additions_45_amended$annotations
+
+
+
+library(ggpubr)
+p6 <- check %>% filter(anno != "CD31_cont") %>% filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("CXCL1")
+
+check %>% filter(anno != "CD31_cont") %>% filter(collagen %in% c("high", "low")) %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson")+ggtitle("CXCL1")+facet_wrap("collagen")
+
+plot_grid(p1,p3,p2,p4,p5,p6,ncol=3)
+
+plot_grid(p1,p3,p2,p4,ncol=2)
+
+
+```
+
+
+
+
+```{r}
+check <- mat["COL1A1",] %>% as.data.frame()
+check$collagen <- sample_sheet_Beth_additions_best30$collagen
+check$cellsum_corected <- sample_sheet_Beth_additions_best30$cellsum_corected
+check$total <- sample_sheet_Beth_additions_best30$total
+check$umcells <- sample_sheet_Beth_additions_best30$umcells
+
+
+
+library(ggpubr)
+check %>% filter(collagen == "high"|collagen=="low") %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson", label.x = -2, label.y = 9)+facet_wrap("collagen")
+
+
+check <- mat["CCL19",] %>% as.data.frame()
+check$collagen <- sample_sheet_Beth_additions_best30$collagen
+check$cellsum_corected <- sample_sheet_Beth_additions_best30$cellsum_corected
+check$total <- sample_sheet_Beth_additions_best30$total
+check$umcells <- sample_sheet_Beth_additions_best30$umcells
+
+
+
+library(ggpubr)
+check %>% filter(collagen == "high"|collagen=="low") %>%  ggscatter(x = "cellsum_corected", y = ".",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson", label.x = -2, label.y = 4)+facet_wrap("collagen")
+```
+
+
+```{r}
+dotplot_cytokines_f %>% filter(features.plot == unique(dotplot_cytokines_f$features.plot)[[i]]) %>% filter(pathotype != c("NA", "Follicular")) %>% ggscatter(x = "avg.exp.scaled", y = "Krenn_Global",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson", label.x = -2, label.y = 10)+ggtitle(unique(dotplot_cytokines_f$features.plot)[[i]])
+
+
+```
+
+
+
+```{r}
+
+
+
+pData(target_demoData_f3)$testRegion <- 
+    factor(pData(target_demoData_f3)$new_anno2, c("low", "high"))
+pData(target_demoData_f3)[["slide"]] <- 
+    factor(pData(target_demoData_f3)[["slide name"]])
+assayDataElement(object = target_demoData_f3, elt = "log_q") <-
+    assayDataApply(target_demoData_f3, 2, FUN = log, base = 2, elt = "q_norm")
+
+
+mixedOutmc <-
+        mixedModelDE(target_demoData_f3,
+                     elt = "log_q",
+                     modelFormula = ~ testRegion + (1 + testRegion | slide),
+                     groupVar = "testRegion",
+                     nCores = 1,
+                     multiCore = F)
+
+
+    # format results as data.frame
+    r_test <- do.call(rbind, mixedOutmc["lsmeans", ])
+    tests <- rownames(r_test)
+    r_test <- as.data.frame(r_test)
+    r_test$Contrast <- tests
+    
+    # use lapply in case you have multiple levels of your test factor to
+    # correctly associate gene name with it's row in the results table
+    r_test$Gene <- 
+        unlist(lapply(colnames(mixedOutmc),
+                      rep, nrow(mixedOutmc["lsmeans", ][[1]])))
+    r_test$Subset <- status
+    r_test$FDR <- p.adjust(r_test$`Pr(>|t|)`, method = "fdr")
+    r_test <- r_test[, c("Gene", "Subset", "Contrast", "Estimate", 
+                         "Pr(>|t|)", "FDR")]
+    
+    results_new <- c()
+
+    results_new <- rbind(results_new, r_test)
+
+
+
+```
+
+
+
+
+
+```{r}
+library(ggrepel) 
+# Categorize results_new based on P-value & FDR for plotting
+results_new$Color <- "NS or FC < 0.5"
+results_new$Color[results_new$`Pr(>|t|)` < 0.05] <- "P < 0.05"
+results_new$Color[results_new$FDR < 0.05] <- "FDR < 0.05"
+results_new$Color[results_new$FDR < 0.001] <- "FDR < 0.001"
+results_new$Color[abs(results_new$Estimate) < 0.5] <- "NS or FC < 0.5"
+results_new$Color <- factor(results_new$Color,
+                        levels = c("NS or FC < 0.5", "P < 0.05",
+                                   "FDR < 0.05", "FDR < 0.001"))
+
+# pick top genes for either side of volcano to label
+# order genes for convenience:
+results_new$invert_P <- (-log10(results_new$`Pr(>|t|)`)) * sign(results_new$Estimate)
+top_g <- c()
+for(cond in c("LM")) {
+    ind <- results_new$Subset == cond
+    top_g <- c(top_g,
+               results_new[ind, 'Gene'][
+                   order(results_new[ind, 'invert_P'], decreasing = TRUE)[1:15]],
+               results_new[ind, 'Gene'][
+                   order(results_new[ind, 'invert_P'], decreasing = FALSE)[1:15]])
+}
+top_g <- unique(top_g)
+results_new <- results_new[, -1*ncol(results_new)] # remove invert_P from matrix
+
+# Graph results_new
+ggplot(results_new,
+       aes(x = Estimate, y = -log10(`Pr(>|t|)`),
+           color = Color, label = Gene)) +
+    geom_vline(xintercept = c(0.5, -0.5), lty = "dashed") +
+    geom_hline(yintercept = -log10(0.05), lty = "dashed") +
+    geom_point() +
+    labs(x = "Enriched in Tubules <- log2(FC) -> Enriched in Glomeruli",
+         y = "Significance, -log10(P)",
+         color = "Significance") +
+    scale_color_manual(values = c(`FDR < 0.001` = "dodgerblue",
+                                  `FDR < 0.05` = "lightblue",
+                                  `P < 0.05` = "orange2",
+                                  `NS or FC < 0.5` = "gray"),
+                       guide = guide_legend(override.aes = list(size = 4))) +
+    scale_y_continuous(expand = expansion(mult = c(0,0.05))) +
+    geom_text_repel(data = subset(results_new, Gene %in% `Pr(>|t|)` < 0.0001),
+                    size = 4, point.padding = 0.15, color = "black",
+                    min.segment.length = .1, box.padding = .2, lwd = 2,
+                    max.overlaps = 500) +
+    theme_bw(base_size = 16) +
+    theme(legend.position = "bottom") +
+    facet_wrap(~Subset, scales = "free_y")
+
+
+
+ggplot(results_new,
+       aes(x = Estimate, y = -log10(`Pr(>|t|)`),
+           color = Color, label = Gene)) +
+    geom_vline(xintercept = c(0.5, -0.5), lty = "dashed") +
+    geom_hline(yintercept = -log10(0.05), lty = "dashed") +
+    geom_point() +
+    labs(x = "Enriched in Tubules <- log2(FC) -> Enriched in Glomeruli",
+         y = "Significance, -log10(P)",
+         color = "Significance") +
+    scale_color_manual(values = c(`FDR < 0.001` = "dodgerblue",
+                                  `FDR < 0.05` = "lightblue",
+                                  `P < 0.05` = "orange2",
+                                  `NS or FC < 0.5` = "gray"),
+                       guide = guide_legend(override.aes = list(size = 4))) +
+    scale_y_continuous(expand = expansion(mult = c(0,0.05))) +
+    geom_text_repel(data = subset(results_new, Gene %in% c("COL1A1", "COL4A1","COL6A1",  "CXCL1")),
+                    size = 4, point.padding = 0.15, color = "black",
+                    min.segment.length = .1, box.padding = .2, lwd = 2,
+                    max.overlaps = 500) +
+    theme_bw(base_size = 16) +
+    theme(legend.position = "bottom") +
+    facet_wrap(~Subset, scales = "free_y")
+
+```
+
