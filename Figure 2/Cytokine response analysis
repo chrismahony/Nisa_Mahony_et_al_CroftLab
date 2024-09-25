@@ -1,0 +1,604 @@
+
+```{r}
+
+
+Idents(merging)<-"named_clusters"
+palette <- c("T Cell Rich Niche"="#0C5BB0FF", "Erythrocytes"="#EE0011FF", "B Cell Rich Niche"="#15983DFF", "COMP+ Fibroblast Niche"="#EC579AFF", "APOD+ GAS5+ FABP4+"="#FA6B09FF", "Vascular Niche"="#149BEDFF", "Lining Layer Cells"= "#A1C720FF")
+
+SpatialDimPlot(merging, images="slice1.13", cols=palette)
+
+cytokines <- dir("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/", pattern = "NS_new2.csv")
+
+cytokines_list <- list()
+for (i in 1:length(cytokines[c(3,6,7,8,9)])){
+  cytokines_list[[i]] <- read_csv(paste0("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/", cytokines[c(3,6,7,8,9)][[i]]))
+}
+names(cytokines_list) <- cytokines[c(3,6,7,8,9)]
+
+for (i in 1:length(names(cytokines_list))){
+  merging<-AddModuleScore(merging, features=list(cytokines_list[[i]]$gene), name=names(cytokines_list)[[i]])
+}
+
+
+
+merging<-AddModuleScore(merging, features=list(IFNg_vs_NSres_f$...1), name="IFNg_module")
+merging<-AddModuleScore(merging, features=list(IL1b_vs_NSres_f$...1), name="IL1b_module")
+merging<-AddModuleScore(merging, features=list(TNFa_vs_NSres_f$...1), name="TNFa_module")
+merging<-AddModuleScore(merging, features=list(IL6_vs_NS$gene), name="IL6_module")
+
+SpatialFeaturePlot(merging, features = "IFNg_module1", images = "slice1.13", max.cutoff = "q80")+NoLegend()
+SpatialFeaturePlot(merging, features = "IL1b_module1", images = "slice1.13", max.cutoff = "q80")+NoLegend()
+SpatialFeaturePlot(merging, features = "TNFa_module1", images = "slice1.13", max.cutoff = "q80")+NoLegend()
+SpatialFeaturePlot(merging, features = "IL6_module1", images = "slice1.13", max.cutoff = "q80")+NoLegend()
+SpatialFeaturePlot(merging, features = "TGFb_module1", images = "slice1.13", max.cutoff = "q80")+NoLegend()
+
+SpatialFeaturePlot(merging, features = "IFNg_module1", images = "slice1.13", max.cutoff = "q80")+NoLegend()
+SpatialFeaturePlot(merging, features = "IL1b_module1", images = "slice1.13", max.cutoff = "q80")+NoLegend()
+SpatialFeaturePlot(merging, features = "TGFb_vs_NS_new.csv1", images = "slice1.13", max.cutoff = "q80")+NoLegend()
+SpatialFeaturePlot(merging, features = "IL6_module1", images = "slice1.13", max.cutoff = "q80")+NoLegend()
+SpatialFeaturePlot(merging, features = "TGFb_module1", images = "slice1.13", max.cutoff = "q80")+NoLegend()
+
+
+SpatialFeaturePlot(merging, features = "IFNg_vs_NS_new2.csv1", images = "slice1.13", max.cutoff = "q80")+NoLegend()+ggtitle("IFNg")
+SpatialFeaturePlot(merging, features = "IL1b_vs_NS_new2.csv1", images = "slice1.13", max.cutoff = "q80")+NoLegend()+ggtitle("IL1b")
+SpatialFeaturePlot(merging, features = "TNFa_vs_NS_new2.csv1", images = "slice1.13", max.cutoff = "q80")+NoLegend()+ggtitle("TNFa")
+SpatialFeaturePlot(merging, features = "IL6_vs_NS_new2.csv1", images = "slice1.13", max.cutoff = "q80")+NoLegend()+ggtitle("IL6")
+SpatialFeaturePlot(merging, features = "TGFb_vs_NS_new2.csv1", images = "slice1.13", max.cutoff = "q80")+NoLegend()+ggtitle("TGFb")
+
+
+p1 <- FeaturePlot(merging, features = "IFNg_vs_NS_new2.csv1", min.cutoff = "q10", max.cutoff = "q90")+NoLegend()+ggtitle("IFNg")
+p2 <- FeaturePlot(merging, features = "IL1b_vs_NS_new2.csv1", min.cutoff = "q10", max.cutoff = "q90")+NoLegend()+ggtitle("IL1b")
+p3 <- FeaturePlot(merging, features = "TNFa_vs_NS_new2.csv1",min.cutoff = "q10", max.cutoff = "q90")+NoLegend()+ggtitle("TNFa")
+p4 <- FeaturePlot(merging, features = "IL6_vs_NS_new2.csv1", min.cutoff = "q10", max.cutoff = "q90")+NoLegend()+ggtitle("IL6")
+p5 <- FeaturePlot(merging, features = "TGFb_vs_NS_new2.csv1", min.cutoff = "q10", max.cutoff = "q90")+NoLegend()+ggtitle("TGFb")
+
+plot_grid(p1,p2,p3,p4,p5, ncol=5)
+
+
+```
+
+```{r}
+
+
+Idents(merging) <- 'first_type_nolining_niche'
+
+levels=levels(merging)[grep("Fibroblast",levels(merging))]
+levels <- levels[-c(4,7,8,10,11)]
+
+
+
+#dotplot <- DotPlot(merging, features=c( "TGFb_module1", "IFNg_module1", "IL1b_module1", #"TNFa_module1","IL6_module1" ), idents=levels)+ RotatedAxis()+ scale_size(range = c(2, 8))
+
+dotplot <- DotPlot(merging, features=c("IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1"), idents=levels[-5])+ RotatedAxis()+ scale_size(range = c(2, 8))
+
+dotplot<-dotplot$data
+library(tidyverse)
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, border=T)
+
+```
+```{r}
+table(merging$Annotations_new_new)
+Idents(merging)<-'Annotations_new_new'
+list(levels(merging))
+DotPlot(merging, features=c( "IFNg_module1", "IL1b_module1", "TNFa_module1","IL6_module1",  "TGFb_module1"), idents = c("periAggr_fibro", "periVasc_fibro"))+ RotatedAxis()+ scale_size(range = c(2, 8))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+
+
+Idents(merging)<-'pathotype'
+
+merging$Annotations_new_new_disease <- paste(merging$Annotations_new_new, merging$diseasestate)
+Idents(merging)<-'Annotations_new_new_disease'
+
+
+
+
+med_fibs_markers <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/med_fibs_markers.csv", row.names=1)
+merging <- AddModuleScore(merging, features = med_fibs_markers %>% filter(cluster== "SPARC+COL3A1+ C4") %>% head(40) %>% rownames() %>% list(), name="EC_interacting_new")
+
+DotPlot(merging, features=c( "IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1", "EC_interacting_new1", "Tcell_module1"), idents = c("periAggr_fibro", "periVasc_fibro"))+ RotatedAxis()+ scale_size(range = c(2, 8))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+
+
+
+
+Idents(merging_anno)<-'diseasestate'
+list(levels(merging_anno))
+DotPlot(merging_anno, features=c( "TGFb_module1", "IFNg_module1", "IL1b_module1", "TNFa_module1","IL6_module1" ,"FLS_HUVEC_module1", "Tcell_module1"))+ RotatedAxis()+ scale_size(range = c(2, 8))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+
+Idents(merging_anno)<-'prediction_named_6datasets'
+ident <- levels(merging_anno)[grep("Fibroblast_",levels(merging_anno) )]
+DotPlot(merging_anno, features=c( "TGFb_module1", "IFNg_module1", "IL1b_module1", "TNFa_module1","IL6_module1" ,"FLS_HUVEC_module1", "Tcell_module1"), idents=ident[-3])+ RotatedAxis()+ scale_size(range = c(2, 8))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+Idents(merging)<-'prediction_named_6datasets'
+ident <- levels(merging)[grep("Fibroblast_",levels(merging_anno) )]
+DotPlot(merging, features=c( "IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1" ,"FLS_HUVEC_module1", "Tcell_module1"), idents=ident[-3])+ RotatedAxis()+ scale_size(range = c(2, 8))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+
+
+
+Idents(merging)<-'pathotype'
+levels(merging)
+
+
+merging$patho_ident <- paste(merging$first_type_nolining, merging$pathotype)
+Idents(merging) <- 'patho_ident'
+levels_plot <- levels(merging)[grep("Fibroblast ", levels(merging))]
+
+DotPlot(merging, features=c( "TGFb_vs_NS_new2.csv1","IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1"), idents=levels_plot[c(1,2)])+ RotatedAxis()+ scale_size(range = c(2, 8))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+
+
+list(levels(merging))
+dotplot<-DotPlot(merging, features=c("IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1" ,"FLS_HUVEC_module1", "Tcell_module1"), idents = c("Lymphoid", "PI" ,   "OA"))+ RotatedAxis()+ scale_size(range = c(2, 8))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot)
+```
+
+```{r}
+
+
+Idents(merging)<-'pathotype'
+levels(merging)
+
+pt2 <- table(merging$named_clusters, merging$pathotype)  
+pt2 <- as.data.frame(pt2)
+pt2$Var1 <- as.character(pt2$Var1)
+
+cols <- as.data.frame(ArchR::paletteDiscrete(merging@meta.data[, "named_clusters"]))
+colnames(cols)<-"colors"
+
+palette <- c("T Cell Rich Niche"="#0C5BB0FF", "Erythrocytes"="#EE0011FF", "B Cell Rich Niche"="#15983DFF", "COMP+ Fibroblast Niche"="#EC579AFF", "APOD+ GAS5+ FABP4+"="#FA6B09FF", "Vascular Niche"="#149BEDFF", "Lining Layer Cells"= "#A1C720FF")
+
+pt2 %>% filter(Var2 %in% c("Lymphoid", "PI")) %>% filter(Var1 != "Erythrocytes") %>% 
+ggplot(aes(x = Var2, y = Freq, fill = Var1))  + 
+        geom_bar(stat = 'identity', position = position_fill())+
+        theme(axis.ticks.y = element_blank()) +
+        coord_flip() +  scale_fill_manual(values = palette)+
+        theme(legend.position = 'bottom', panel.border = element_rect(colour = "black", fill=NA, size=0.5), panel.background = element_blank()) + 
+        labs(fill = 'Tissue-Defined Cluster', y = 'Cluster Frequency in Sample') + 
+        guides(fill = guide_legend(override.aes = list(stroke = 1, alpha = 1, shape = 16, size = 2)), alpha = FALSE)
+```
+```{r}
+
+merging$diseasestate
+
+Idents(merging)<-'diseasestate'
+levels(merging)
+
+pt2 <- table(merging$named_clusters, merging$diseasestate)  
+pt2 <- as.data.frame(pt2)
+pt2$Var1 <- as.character(pt2$Var1)
+
+cols <- as.data.frame(ArchR::paletteDiscrete(merging@meta.data[, "named_clusters"]))
+colnames(cols)<-"colors"
+
+palette <- c("T Cell Rich Niche"="#0C5BB0FF", "Erythrocytes"="#EE0011FF", "B Cell Rich Niche"="#15983DFF", "COMP+ Fibroblast Niche"="#EC579AFF", "APOD+ GAS5+ FABP4+"="#FA6B09FF", "Vascular Niche"="#149BEDFF", "Lining Layer Cells"= "#A1C720FF")
+
+pt2 %>%  filter(Var1 != "Erythrocytes") %>% 
+ggplot(aes(x=factor(Var2, level=rev(c('OA', 'Early RA', 'Established RA', 'Resolving RA'))), y = Freq, fill = Var1))  + 
+        geom_bar(stat = 'identity', position = position_fill())+
+        theme(axis.ticks.y = element_blank()) +
+        coord_flip() +  scale_fill_manual(values = palette)+
+        theme(legend.position = 'bottom', panel.border = element_rect(colour = "black", fill=NA, size=0.5), panel.background = element_blank()) + 
+        labs(fill = 'Tissue-Defined Cluster', y = 'Cluster Frequency in Sample') + 
+        guides(fill = guide_legend(override.aes = list(stroke = 1, alpha = 1, shape = 16, size = 2)), alpha = FALSE)
+```
+
+
+
+
+
+```{r}
+
+
+merging$C4_markers1
+
+Idents(merging)<-'diseasestate'
+list(levels(merging))
+dotplot<-DotPlot(merging, features=c("IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1" ,"C4_markers1", "Tcell_module1"), idents = levels(merging)[-2])+ RotatedAxis()+ scale_size(range = c(2, 8))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot)
+
+
+Heatmap(dotplot[,c(2,1,3)], cluster_columns = F, border=T)
+
+```
+
+```{r}
+
+merging_clean$diseasestate <- merging$diseasestate
+
+Idents(merging_clean)<-'diseasestate'
+
+feature <- colnames(merging_clean@meta.data)[grep('Fibroblast', colnames(merging_clean@meta.data))]
+
+dotplot<-DotPlot(merging_clean, features=feature[-c(1:3,8)],idents = levels(merging_clean)[-2])+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))+RotatedAxis()
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot[,c(2,1,3)], cluster_columns = F, border=T)
+
+
+```
+
+
+
+
+```{r}
+med_fibs_markers <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/med_fibs_markers.csv", row.names=1)
+merging <- AddModuleScore(merging, features = med_fibs_markers %>% filter(cluster== "SPARC+COL3A1+ C4") %>% head(40) %>% rownames() %>% list(), name="EC_interacting_new")
+
+
+Idents(merging)<-'pathotype'
+list(levels(merging))
+DotPlot(merging, features=c( "TGFb_module1", "IFNg_module1", "IL1b_module1", "TNFa_module1","IL6_module1" ,"EC_interacting_new1", "Tcell_module1"), idents = c("Lymphoid", "PI" ,   "OA"))+ RotatedAxis()+ scale_size(range = c(2, 8))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+
+
+Idents(merging)<-'first_type_nolining_niche'
+to_lot <- levels(merging)[grep("Fibroblast ",levels(merging))]
+
+DotPlot(merging, features=c( "TGFb_module1", "IFNg_module1", "IL1b_module1", "TNFa_module1","IL6_module1" ,"EC_interacting_new1", "Tcell_module1"), idents = to_lot[-c(4,7,8,10,11)])+ RotatedAxis()+ scale_size(range = c(2, 8))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
+
+```
+
+```{r}
+Idents(merging) <- 'orig.ident'
+
+#dotplot_cytokines <- DotPlot(merging, features = c("TGFb_module1", "IFNg_module1", "IL1b_module1", #"TNFa_module1","IL6_module1" ,"FLS_HUVEC_module1", "Tcell_module1") )
+
+dotplot_cytokines <- DotPlot(merging, features=c("RUNX1", "IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1","EC_interacting_new1", "Tcell_module1"))+ RotatedAxis()+ scale_size(range = c(2, 8))
+
+
+clinical_scores=Copy_of_Tissue_grading_Visium_Samples_for_Patricia_missing_053
+dotplot_cytokines <- dotplot_cytokines$data
+
+clinical_scores_f <- clinical_scores[-3,]
+
+dotplot_cytokines_f <-dotplot_cytokines[-c(12:17,20),] 
+
+
+dotplot_id <- DotPlot(merging, features = c("TGFb_module1") )
+dotplot_id <- dotplot_id$data
+dotplot_id <-dotplot_id[-c(12:17,20),] 
+
+
+corrolations <- data.frame(row.names= c(1:21))
+corrolations$clinical_code <- clinical_scores_f$VISIUM
+corrolations$visium_code <- dotplot_id$id
+
+corrolations$Bham_Agg_worst_case <- clinical_scores_f$`Bham Agg worst case`
+corrolations$Krenn_stroma <- clinical_scores_f$`Krenn Stroma`
+corrolations$Krenn_LL <- clinical_scores_f$`Krenn LL`
+corrolations$Syn_QC <- clinical_scores_f$`Syn QC%`
+corrolations$LL_QC <- clinical_scores_f$`LL QC %`
+corrolations$Krenn_Inflam_Infiltrate <- clinical_scores_f$`Krenn Inflam Infiltrate`
+corrolations$Krenn_Global <- clinical_scores_f$`Krenn Global`
+corrolations$Bham_Density_mean <- clinical_scores_f$`Bham Density mean`
+corrolations <- corrolations[-8,]
+clinical_scores_ff <- clinical_scores_f[-8,]
+
+corrolations$Bham_Agg_worst_case <- as.double(corrolations$Bham_Agg_worst_case)
+corrolations$pathotype <- clinical_scores_ff$Pathotype
+
+corrolations$TGFb_module1 <- dotplot_cytokines_f$TGFb_module1
+corrolations$IFNg_module1 <- dotplot_cytokines_f$IFNg_module1
+corrolations$IL1b_module1 <- dotplot_cytokines_f$IL1b_module1
+corrolations$TNFa_module1 <- dotplot_cytokines_f$TNFa_module1
+corrolations$IL6_module1 <- dotplot_cytokines_f$IL6_module1
+corrolations$FLS_HUVEC_module1 <- dotplot_cytokines_f$EC_interacting_new1
+corrolations$Tcell_module1 <- dotplot_cytokines_f$Tcell_module1
+
+corrolations$id <- corrolations$visium_code
+dotplot_cytokines_f <- left_join(x=dotplot_cytokines_f, y=corrolations, by="id")
+
+
+corrolations %>% filter(pathotype != "Follicular") %>%  ggplot(aes(x=pathotype, y=Krenn_Global, fill=pathotype))+
+        geom_point(shape = 21, size=3)+theme_ArchR()+ theme(legend.position = "none")+RotatedAxis()
+
+
+library(ggpubr)
+ggplots <- list()
+for (i in 1:length(unique(dotplot_cytokines_f$features.plot))){
+   ggplots[[i]] <- dotplot_cytokines_f %>% filter(features.plot == unique(dotplot_cytokines_f$features.plot)[[i]]) %>% filter(pathotype != c("NA", "Follicular")) %>% ggscatter(x = "avg.exp.scaled", y = "Krenn_Global",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson", label.x = 0, label.y = 10)+ggtitle(unique(dotplot_cytokines_f$features.plot)[[i]])
+    print(ggplots[[i]])
+    }
+
+plot_grid(ggplots[[1]], ggplots[[2]], ggplots[[7]],ggplots[[3]], ggplots[[4]], ggplots[[5]], nrow=2, ncol=3)  
+
+
+plot_grid(ggplots[[6]])
+
+plot_grid(ggplots[[7]])
+
+```
+
+```{r}
+Idents(merging) <- 'orig.ident'
+
+
+merging$sample_cell <- paste(merging$orig.ident, merging$first_type_nolining, sep=".")
+Idents(merging) <- 'sample_cell'
+levels(merging)[grep("Fibroblast", levels(merging))]
+
+
+dotplot_cytokines <- DotPlot(merging, features=c("IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1","EC_interacting_new1", "Tcell_module1", idents=levels(merging)[grep("Fibroblast", levels(merging))]))+ RotatedAxis()
+dotplot_cytokines
+
+clinical_scores=Copy_of_Tissue_grading_Visium_Samples_for_Patricia_missing_053
+dotplot_cytokines <- dotplot_cytokines$data
+
+library(splitstackshape)
+dotplot_cytokines <- cSplit(dotplot_cytokines, splitCols ="id", sep="." )
+
+dotplot_cytokines <- dotplot_cytokines %>% filter(id_2=="Fibroblast")
+
+clinical_scores_f <- clinical_scores[-3,]
+
+dotplot_cytokines_f <-dotplot_cytokines[-c(12:17,20),] 
+
+
+dotplot_id <- DotPlot(merging, features = c("TGFb_module1") )
+dotplot_id <- dotplot_id$data
+dotplot_id <- cSplit(dotplot_id, splitCols ="id", sep="." )
+dotplot_id <- dotplot_id %>% filter(id_2=="Fibroblast")
+dotplot_id <-dotplot_id[-c(12:17,20),] 
+
+
+corrolations <- data.frame(row.names= c(1:21))
+corrolations$clinical_code <- clinical_scores_f$VISIUM
+corrolations$visium_code <- dotplot_id$id_1
+
+corrolations$Bham_Agg_worst_case <- clinical_scores_f$`Bham Agg worst case`
+corrolations$Krenn_stroma <- clinical_scores_f$`Krenn Stroma`
+corrolations$Krenn_LL <- clinical_scores_f$`Krenn LL`
+corrolations$Syn_QC <- clinical_scores_f$`Syn QC%`
+corrolations$LL_QC <- clinical_scores_f$`LL QC %`
+corrolations$Krenn_Inflam_Infiltrate <- clinical_scores_f$`Krenn Inflam Infiltrate`
+corrolations$Krenn_Global <- clinical_scores_f$`Krenn Global`
+corrolations$Bham_Density_mean <- clinical_scores_f$`Bham Density mean`
+corrolations <- corrolations[-8,]
+clinical_scores_ff <- clinical_scores_f[-8,]
+
+corrolations$Bham_Agg_worst_case <- as.double(corrolations$Bham_Agg_worst_case)
+corrolations$pathotype <- clinical_scores_ff$Pathotype
+
+corrolations$TGFb_module1 <- dotplot_cytokines_f$TGFb_module1
+corrolations$IFNg_module1 <- dotplot_cytokines_f$IFNg_module1
+corrolations$IL1b_module1 <- dotplot_cytokines_f$IL1b_module1
+corrolations$TNFa_module1 <- dotplot_cytokines_f$TNFa_module1
+corrolations$IL6_module1 <- dotplot_cytokines_f$IL6_module1
+corrolations$FLS_HUVEC_module1 <- dotplot_cytokines_f$EC_interacting_new1
+corrolations$Tcell_module1 <- dotplot_cytokines_f$Tcell_module1
+
+corrolations$id <- corrolations$visium_code
+
+dotplot_cytokines_f$id <- dotplot_cytokines_f$id_1
+
+dotplot_cytokines_f <- left_join(x=dotplot_cytokines_f, y=corrolations, by="id")
+
+
+corrolations %>% filter(pathotype != "Follicular") %>%  ggplot(aes(x=pathotype, y=Krenn_Global, fill=pathotype))+
+        geom_point(shape = 21, size=3)+theme_ArchR()+ theme(legend.position = "none")+RotatedAxis()
+
+
+library(ggpubr)
+ggplots <- list()
+for (i in 1:length(unique(dotplot_cytokines_f$features.plot))){
+   ggplots[[i]] <- dotplot_cytokines_f %>% filter(features.plot == unique(dotplot_cytokines_f$features.plot)[[i]]) %>% filter(pathotype != c("NA", "Follicular")) %>% ggscatter(x = "avg.exp.scaled", y = "Krenn_Global",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson", label.x = 0, label.y = 10)+ggtitle(unique(dotplot_cytokines_f$features.plot)[[i]])
+    print(ggplots[[i]])
+    }
+
+plot_grid(ggplots[[1]], ggplots[[2]], ggplots[[7]],ggplots[[3]], ggplots[[4]], ggplots[[5]], nrow=2, ncol=3)  
+
+
+
+ggplots[[1]]
+
+
+plot_grid(ggplots[[5]])
+
+plot_grid(ggplots[[6]])
+
+plot_grid(ggplots[[7]])
+
+```
+
+
+
+
+
+
+```{r}
+ggplots[[6]]
+```
+```{r}
+
+palette <- c("T Cell Rich Niche"="#0C5BB0FF", "Erythrocytes"="#EE0011FF", "B Cell Rich Niche"="#15983DFF", "COMP+ Fibroblast Niche"="#EC579AFF", "APOD+ GAS5+ FABP4+"="#FA6B09FF", "Vascular Niche"="#149BEDFF", "Lining Layer Cells"= "#A1C720FF")
+DimPlot(merging, group.by = "named_clusters", cols=palette)
+FeaturePlot(merging, features = "TGFb_vs_NS_new2.csv1", max.cutoff = "q90", min.cutoff = "q10")
+
+
+```
+```{r}
+Idents(merging) <- 'named_clusters'
+all_markers_niche <- FindAllMarkers(merging, only.pos = T)
+
+all_markers_niche_f <- all_markers_niche %>% filter(p_val_adj < 0.05)
+
+markers_list <- list()
+for (i in 1:length(unique(all_markers_niche_f$cluster))){
+  markers_list[[i]] <- all_markers_niche_f %>% filter(cluster== unique(all_markers_niche_f$cluster)[[i]])
+  }
+names(markers_list) <- unique(all_markers_niche_f$cluster)
+
+for (i in 1:length(markers_list)){
+merging <- AddModuleScore(merging, features = list(markers_list[[i]]$gene), name= paste0(unique(all_markers_niche_f$cluster)[[i]], "markers_mod"))
+}
+
+
+
+Idents(merging) <- 'orig.ident'
+
+dotplot_niche_mods <- DotPlot(merging, features=colnames(merging@meta.data)[grep("markers_mod1",colnames(merging@meta.data))][-4]
+)+ RotatedAxis()+ scale_size(range = c(2, 8))
+
+
+dotplot_niche_mods <- dotplot_niche_mods$data
+
+clinical_scores_f <- clinical_scores[-3,]
+
+dotplot_niche_mods<-dotplot_niche_mods %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = features.plot, values_from = avg.exp.scaled) %>% 
+  as.data.frame()
+
+dotplot_niche_mods_f <-dotplot_niche_mods[-c(12:17,20),]
+
+dotplot_id <- DotPlot(merging, features = c("TGFb_module1") )
+dotplot_id <- dotplot_id$data
+dotplot_id <-dotplot_id[-c(12:17,20),] 
+
+
+corrolations <- data.frame(row.names= c(1:21))
+corrolations$clinical_code <- clinical_scores_f$VISIUM
+corrolations$visium_code <- dotplot_id$id
+corrolations$Krenn_Global <- clinical_scores_f$`Krenn Global`
+corrolations$Pathotype <- clinical_scores_f$Pathotype
+
+corrolations <- corrolations[-8,]
+clinical_scores_ff <- clinical_scores_f[-8,]
+
+dotplot_niche_mods_f$Krenn_Global <- clinical_scores_f$`Krenn Global`
+dotplot_niche_mods_f$Pathotype <- clinical_scores_f$Pathotype
+
+
+to_plot <- colnames(dotplot_niche_mods_f)[-c(1,8,9)]
+
+ggplots2 <- list()
+for (i in 1:length(colnames(merging@meta.data)[grep("markers_mod1",colnames(merging@meta.data))][-4])){
+   ggplots2[[i]] <- dotplot_niche_mods_f %>% filter(Pathotype != c("NA", "Follicular")) %>% ggscatter(x = to_plot[[i]], y = "Krenn_Global",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+    )+ stat_cor(method = "pearson", label.x = -2, label.y = 10)+ggtitle(to_plot[[i]])
+    print(ggplots2[[i]])
+    }
+
+plot_grid(ggplots2[[1]], ggplots2[[2]], ggplots2[[6]],ggplots2[[3]], ggplots2[[4]], ggplots2[[5]], nrow=2, ncol=3)  
+
+
+
+```
+```{r}
+clinical_scores_f
+```
+
+
+```{r}
+
+Idents(merging) <- 'named_clusters'
+DotPlot(merging, features="PDPN")
+
+```
+
+
