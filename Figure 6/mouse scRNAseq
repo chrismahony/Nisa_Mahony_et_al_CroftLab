@@ -1,0 +1,425 @@
+---
+title: "Zonation Paper AIA Figs"
+output: html_notebook
+---
+
+```{r General Clusters UMAP, cache=TRUE, warning=FALSE}
+Idents(AIA) <- "General"
+p1 <-SCpubr::do_DimPlot(AIA,label = FALSE,  label.color = "black", pt.size = 2, repel = TRUE, label.box = TRUE, 
+                        label.fill = alpha(c("white"),0.7), label.size = 12, reduction = "UMAP")+  guides(color = guide_legend(nrow = 2))+theme(legend.text = element_text(color = "black", size = "20", face = "bold"),  legend.position = "top")
+
+
+p1
+```
+```{r Fibroblast Clusters UMAP, cache=TRUE, warning=FALSE}
+
+Idents(AIA_Fb) <- "Final"
+p2<- SCpubr::do_DimPlot(AIA_Fb,label = TRUE,  label.color = "black", pt.size = 1.5, repel = TRUE, label.box = TRUE, 
+                        label.fill = alpha(c("white"),0.7), label.size = 12, reduction = "UMAP")+NoLegend()
+
+p2
+
+```
+```{r Find All Markers, cache=TRUE, warning=FALSE}
+Idents(AIA) <- "General"
+AIA.RES <- FindAllMarkers(AIA, test.use = "wilcox", verbose = TRUE, assay = "RNA", only.pos = T, min.pct = 0.5)
+AIA.top80 <- AIA.RES %>% group_by(cluster) %>% top_n(n = 80, wt = avg_log2FC)
+
+
+Idents(AIA_Fb) <- "Final"
+AIA_Fb.RES <- FindAllMarkers(AIA_Fb, test.use = "wilcox", verbose = TRUE, assay = "RNA", only.pos = T, min.pct = 0.5)
+AIA_Fb.top80 <- AIA_Fb.RES %>% group_by(cluster) %>% top_n(n = 80, wt = avg_log2FC)
+
+```
+
+```{r General Cluster Marker Genes, cache=TRUE, warning=FALSE}
+Idents(AIA) <- "General"
+genes <- list("Monocytes" = c("Cd14","Itgam","Ly6c2"),"Macrophages" = c("Cd68", "Adgre1", "Mertk"),
+              "DCs" = c("H2-Ab1","Itgax"),"ILCs" = c("Tox","Rora"),"NK Cells" = c("Klrb1c","Ncr1"),
+              "B Cells" = c("Cd19", "Cd79a"),"T Cells" = c("Cd3e", "Cd3d"),"Mast Cells" = c("Mcpt4","Fcer1a"),
+              "Fibroblasts" = c("Pdpn",  "Pdgfra"),"Pericytes" = c("Acta2", "Des"), "Osteoblasts" = c("Alpl","Bglap"),
+              "Chondrocytes" = c("Chad",  "Cilp"),"Vascular Endothelial" = c("Cdh5", "Emcn") )
+
+
+
+p1<- SCpubr::do_DotPlot(sample = AIA, 
+                        features = genes, assay = "RNA", dot.scale = 8, use_viridis = FALSE,  sequential.palette = "PuBuGn",scale = TRUE,
+                        number.breaks = 5,flip = TRUE,legend.position = "top",font.size = 20,font.type = "sans")+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=1.1) +theme(axis.text.y = element_text(face = "bold"),axis.text.x = element_text(face = "bold"))
+
+
+p1
+```
+
+```{r Fibroblast subset markers, cache=TRUE, warning=FALSE}
+AIA_Fb$Final<- factor(AIA_Fb$Final, levels = c("Prg4 Tspan15" ,"CD34 CD248","CD34 Apod" ,"Cthrc1 Postn", "Cxcl9 Cxcl10"))
+Idents(AIA_Fb) <- "Final"
+genes3 <- list("Prg4 Tspan15" = c("Prg4", "Tspan15"),"CD34 Clec3b" = c("Cd248","Cd34"),"CD34 Pi16" = c("Apod"),
+               "Cthrc1 Postn" = c("Cthrc1", "Postn"),"Cxcl9 Cxcl10" = c("Cxcl9", "Cxcl10"))
+
+genes3_reversed <- rev(genes3)
+p2<- SCpubr::do_DotPlot(sample = AIA_Fb, 
+                        features = genes3_reversed, assay = "RNA", dot.scale = 8, use_viridis = FALSE,  sequential.palette = "PuBuGn",scale = TRUE,
+                        number.breaks = 5,legend.position = "top",font.size = 20,font.type = "sans", flip = TRUE)+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=1.1) +theme(axis.text.y = element_text(face = "bold"),axis.text.x = element_text(face = "bold"))
+
+
+p2
+```
+
+```{r All Fb Proportions, cache=TRUE, warning=FALSE}
+numbers <- table(AIA_Fb$inflammation, AIA_Fb@active.ident)
+numbers <- as.data.frame(numbers)
+numbers$Var1 <- as.character(numbers$Var1)
+
+
+hex_codes <- c("#c83658","#917a00","#00914c","#0091b1","#9240c7" )
+
+p1<- ggplot(numbers, aes(x=factor(Var1, levels=c("Resting", "Peak", "Resolving", "Resolved")), 
+                         y=Freq, fill=Var2)) +
+  theme_bw(base_size = 15)  +
+  geom_col(position = "fill", width = 0.5,colour = "black") +
+  xlab("") +
+  ylab("Proportion (%)") +
+  theme(legend.title = element_blank(), legend.text =element_text(face = "bold",size = 20) ) +
+  scale_fill_manual(values = hex_codes)+
+  scale_y_continuous(labels = scales::percent)+theme(axis.text.y = element_text(face = "bold",size = 20, colour = "black"),
+                                                     axis.text.x = element_text(face = "bold",size = 20, colour = "black"),
+                                                     axis.title.x = element_text(size = 20,face = "bold", colour = "black"),
+                                                     axis.title.y = element_text(size = 20,face = "bold", colour = "black"),
+                                                     legend.position = "top")
+
+p1
+```
+```{r Cthrc1 Postn Proportions, cache=TRUE, warning=FALSE}
+library(tidyr)
+library(tidyverse)
+AIA_Fb$sample_condition<-paste(AIA_Fb$orig.ident, AIA_Fb$inflammation, sep=".") #condition would be resting/peak/resolved etc
+
+pt <- table(AIA_Fb$sample_condition, AIA_Fb$Final)
+pt <- as.data.frame(pt)
+
+pt<-pt %>%
+  pivot_wider(names_from = Var2, values_from = Freq) %>% 
+  as.data.frame() 
+
+
+pt <- pt %>% remove_rownames %>% column_to_rownames(var="Var1")
+pt <- pt/rowSums(pt)
+
+pt$condition<-rownames(pt)
+library(ggpubr)
+library(splitstackshape)
+pt<-cSplit(pt, splitCols="condition", sep=".")
+pt <- pt[!grepl("pos", pt$condition_1), ]
+
+names(pt)[names(pt) == 'Cthrc1 Postn'] <- 'Cthrc1Postn'
+
+cluster1 <- ggplot(pt, aes(x=factor(condition_2, level=c("Resting", "Peak", "Resolving", "Resolved", "Persistent")), y=Cthrc1Postn)) + 
+  geom_boxplot(fill =c("Resting" = "#0077BB", "Peak" = "#CC3311", "Resolving" = "#009988", "Resolved" = "#EE7733"), lwd = 1, color = "black",width=0.9, position = position_dodge(width=0.5)) + 
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.7, fill = NA, stroke = 2.5)+ggtitle("Cluster1")+theme_classic()+RotatedAxis()+
+  stat_boxplot(geom ='errorbar', width = 0.4, lwd=1)
+
+res.aov_cluster1 <- aov(`Cthrc1Postn` ~ condition_2, data = pt)
+summary(res.aov_cluster1)
+stats_cluster1 <- TukeyHSD(res.aov_cluster1)
+stats_cluster1
+
+# Extracting the Tukey HSD results
+tukey_df <- as.data.frame(stats_cluster1$condition_2)
+tukey_df <- tukey_df %>%
+  rownames_to_column(var = "comparison") %>%
+  separate(comparison, into = c("group1", "group2"), sep = "-")
+
+add_significance_symbols <- function(tukey_df) {
+  # Define thresholds and corresponding symbols
+  thresholds <- c(0, 0.001, 0.01, 0.05, Inf)
+  symbols <- c("***", "**", "*", "")  # Adjusted labels for each interval
+  
+  # Add column 'sig' with significance symbols based on p.adj values
+  tukey_df$sig <- cut(tukey_df$`p adj`, breaks = thresholds, labels = symbols)
+  
+  return(tukey_df)
+}
+
+
+tukey_df <- add_significance_symbols(tukey_df)
+tukey_df<-tukey_df %>%
+  filter(sig !="")
+
+# Adding the Tukey HSD results to the boxplot
+cluster2 <- cluster1 +
+  stat_pvalue_manual(tukey_df, label = "sig",
+                     y.position = max(pt$Cthrc1Postn) + 0.05, 
+                     tip.length = 0, 
+                     step.increase = 0.1,
+                     hide.ns = TRUE,size = 10, bracket.size = 1)
+p2 <- cluster2 +
+  xlab("") +
+  ylab("Proportion (%)") +
+  theme(legend.title = element_blank(), legend.text =element_text(face = "bold",size = 20) ) +
+  scale_y_continuous(labels = scales::percent, n.breaks = 4)+theme(axis.text.y = element_text(face = "bold",size = 20, colour = "black"),
+                                                                   axis.text.x = element_text(face = "bold",size = 20, angle = 0,vjust = 0.5, hjust= 0.5, colour = "black"),
+                                                                   axis.title.x = element_text(size = 20,face = "bold"),
+                                                                   axis.title.y = element_text(size = 20,face = "bold"), plot.title = element_text( face = "bold", size = 22, hjust = 0.5)) + ggtitle("Cthrc1+ Postn+ Fibroblasts")+ 
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 2))
+
+
+p2
+```
+```{r Go Analysis, cache=TRUE, warning=FALSE}
+getExpressedGenesFromSeuratObject <- function(seurat_object,
+                                              clusters,
+                                              min.pct=0.1)
+{
+  expressed <- c()
+  for(cluster in clusters)
+  {
+    # get genes detected in the cluster
+    cluster_cells <- names(seurat_object@active.ident[seurat_object@active.ident==cluster])
+    clust_pcts <- apply(seurat_object@assays$RNA@data[,cluster_cells],
+                        1, function(x) sum(x>0)/length(x))
+    
+    detected_in_clust <- names(clust_pcts[clust_pcts>min.pct])
+    
+    # get genes detected in the other cells
+    other_cells <- names(seurat_object@active.ident[seurat_object@active.ident!=cluster])
+    other_pcts <- apply(seurat_object@assays$RNA@data[,other_cells],
+                        1, function(x) sum(x>0)/length(x))
+    
+    detected_in_other_cells <- names(other_pcts[other_pcts>min.pct])
+    
+    expressed <- c(expressed, detected_in_clust, detected_in_other_cells)
+  }
+  expressed <- unique(expressed)
+  expressed
+}
+
+
+expressed_genes <- getExpressedGenesFromSeuratObject(AIA_Fb,levels(AIA_Fb@active.ident), min.pct=0.1)
+
+index <- match(AIA_Fb.RES$gene, annotation_gs$gene_name)
+AIA_Fb.RES$ensembl <- annotation_gs$ensembl_id[index]
+
+FilteredGeneID <- expressed_genes
+index <- match(FilteredGeneID, annotation_gs$gene_name)
+ensemblUni <- annotation_gs$ensembl_id[index]
+
+seurat_obj.res <- AIA_Fb.RES
+seurat_obj <- AIA_Fb
+seurat_obj.res <- seurat_obj.res[!is.na(seurat_obj.res$ensembl),]
+ensemblUni <- na.omit(ensemblUni)
+
+go.results <- runGO.all(results=seurat_obj.res,
+                        background_ids = ensemblUni, gene_id_col="ensembl", gene_id_type="ensembl", sample_col="cluster", p_col="p_val_adj", p_threshold=0.05,
+                        species = "mm")
+go.results <- filterGenesets(go.results)
+go.results.top <- go.results %>% group_by(cluster) %>% top_n(n=5, -p.val)
+sampleEnrichmentDotplot(go.results.top, selection_col = "description", selected_genesets = unique(go.results.top$description), sample_id_col = "cluster", fill_var = "odds.ratio", maxl=50, title="Go term")
+
+unique_go_results <- go.results %>% distinct(description, .keep_all = TRUE)
+write.csv(unique_go_results, file = "Go_FilteredUn.csv")
+
+### Import back in after selecting pathways
+
+Go_FilteredUn <- read_csv("Go_FilteredUn.csv")
+go.results.top <- Go_FilteredUn %>% group_by(cluster) %>% top_n(n=5, -p.val)
+levels(AIA_Fb)
+desired_order <- c("Cxcl9 Cxcl10","Cthrc1 Postn","Prg4 Tspan15" ,"CD34 Apod" , "CD34 CD248")  # Replace with your desired order
+go.results.top$cluster <- factor(go.results.top$cluster, levels = desired_order)
+
+p1<- sampleEnrichmentDotplot(go.results.top, selection_col = "description", 
+                             selected_genesets = unique(go.results.top$description), sample_id_col = "cluster", 
+                             fill_var = "odds.ratio", maxl=50, title="Go term")
+p1 <-p1+ geom_point(aes(size=n_fg), shape = 21, colour="black", stroke=1.1) +theme(axis.text.y = element_text(face = "bold",size = 18,colour = "black"),
+                                                                                   axis.text.x = element_text(face = "bold",size = 20, colour = "black"),
+                                                                                   axis.title.x = element_blank(),
+                                                                                   axis.title.y = element_blank(),
+                                                                                   legend.position = "top", 
+                                                                                   legend.text =element_text(face = "bold",size = 16, colour = "black"),
+                                                                                   legend.title = element_text(face = "bold",size = 16, colour = "black") )
+
+p1 <- p1 + scale_size_continuous(range = c(12, 18))
+p1
+```
+
+```{r Cluster Mapping, cache=TRUE, warning=FALSE}
+
+markers_fibs <- read_csv("markers_fibs.csv")
+for ( i in 1:length(unique(markers_fibs$cluster))){
+  cluster_fibs <- markers_fibs %>% filter(cluster== unique(markers_fibs$cluster)[[i]])
+  library(babelgene)
+  mouse <- orthologs(genes = cluster_fibs$gene, species = "mouse")
+  AIA_Fb <- AddModuleScore(AIA_Fb, features=list(mouse$symbol), name=unique(markers_fibs$cluster)[[i]])
+}
+
+
+DotPlot(AIA_Fb, features = c("Fibroblast COMP+ Fibroblast Niche1","Fibroblast Lining Layer Cells1",
+"Fibroblast APOD+ GAS5+ FABP4+1", "Fibroblast Vascular Niche1", "Fibroblast B Cell Rich Niche1",
+"Fibroblast T Cell Rich Niche1"), assay = "RNA", col.min = 0)
+
+```
+```{r Mapping Dotplot 2, cache=TRUE, warning=FALSE}
+DotPlot(AIA_Fb, features = c("Fibroblast COMP+ Fibroblast Niche1","Fibroblast B Cell Rich Niche1",
+"Fibroblast T Cell Rich Niche1"), assay = "RNA", col.min = 0)
+```
+
+```{r TGFb module, cache=TRUE, warning=FALSE}
+markers_tgfb <- read_csv("TGFb_vs_NS_new.csv")
+library(babelgene)
+mouse <- orthologs(genes = markers_tgfb$gene, species = "mouse")
+AIA_Fb <- AddModuleScore(AIA_Fb, features=list(mouse$symbol), name="TGFb_vs_NS")
+DotPlot(AIA_Fb, features = c("TGFb_vs_NS1"), assay = "RNA", col.min = 0)
+```
+```{r modules over timecourse, cache=TRUE,warning=FALSE,fig.height=20,fig.width=40}
+Idents(AIA_Fb) <- "inflammation"
+DotPlot(AIA_Fb, features = c("TGFb_vs_NS1","Fibroblast COMP+ Fibroblast Niche1","Fibroblast B Cell Rich Niche1",
+"Fibroblast T Cell Rich Niche1"), assay = "RNA", col.min = 0,split.by = "Final", cols = c("darkorange", "brown1", "darkgreen", "darkcyan", "purple")) +coord_flip()
+```
+
+```{r save markers, cache=TRUE, warning=FALSE}
+write.csv(AIA_Fb.top80, file = "AIA_Fb.top80.csv")
+write.csv(AIA.top80, file = "AIA.top80.csv")
+```
+
+
+```{r all modules, cache=TRUE, warning=FALSE}
+Idents(AIA_Fb) <- "inflammation"
+DotPlot(AIA_Fb, features = c("TGFb_vs_NS1","Fibroblast COMP+ Fibroblast Niche1","Fibroblast B Cell Rich Niche1",
+"Fibroblast T Cell Rich Niche1"), assay = "RNA", col.min = 0)+coord_flip()
+
+```
+
+```{r Just Postn Fbs, cache=TRUE, warning=FALSE}
+Postn <- subset(AIA_Fb, idents = c("Cthrc1 Postn"))
+Idents(Postn) <- "inflammation"
+Postn.RES <- FindAllMarkers(Postn, test.use = "wilcox", verbose = TRUE, assay = "RNA", only.pos = T, min.pct = 0.5)
+Postn.top80 <- Postn.RES %>% group_by(cluster) %>% top_n(n = 80, wt = avg_log2FC)
+Postn.top10 <- Postn.RES %>% group_by(cluster) %>% top_n(n = 10, wt = avg_log2FC)
+average_expression <- AverageExpression(Postn, features = Postn.top10$gene, return.seurat = TRUE)
+DoHeatmap(average_expression, features = Postn.top10$gene,label = FALSE ,draw.lines = FALSE) + 
++   theme(axis.text.y = element_text(size = 20, face = "bold", colour = "black"))+  scale_fill_gradientn(colors = rev(RColorBrewer::brewer.pal(n =5, name = "RdBu")))
+```
+
+```{r Just Postn pathway, cache=TRUE, warning=FALSE}
+expressed_genes <- getExpressedGenesFromSeuratObject(Postn,levels(Postn@active.ident), min.pct=0.1)
+index <- match(Postn.RES$gene, annotation_gs$gene_name)
+expressed_genes <- getExpressedGenesFromSeuratObject(Postn,levels(Postn@active.ident), min.pct=0.1)
+index <- match(Postn.RES$gene, annotation_gs$gene_name)
+Postn.RES$ensembl <- annotation_gs$ensembl_id[index]
+FilteredGeneID <- expressed_genes
+index <- match(FilteredGeneID, annotation_gs$gene_name)
+ensemblUni <- annotation_gs$ensembl_id[index]
+seurat_obj.res <- Postn.RES
+seurat_obj <- Postn
+seurat_obj.res <- seurat_obj.res[!is.na(seurat_obj.res$ensembl),]
+ensemblUni <- na.omit(ensemblUni)
+go.results <- runGO.all(results=seurat_obj.res,
++                         background_ids = ensemblUni, gene_id_col="ensembl", gene_id_type="ensembl", sample_col="cluster", p_col="p_val_adj", p_threshold=0.05,
++                         species = "mm")
+go.results <- filterGenesets(go.results)
+go.results.top <- go.results %>% group_by(cluster) %>% top_n(n=5, -p.val)
+sampleEnrichmentDotplot(go.results.top, selection_col = "description", selected_genesets = unique(go.results.top$description), sample_id_col = "cluster", fill_var = "odds.ratio", maxl=50, title="Go term")
+unique_go_results <- go.results %>% distinct(description, .keep_all = TRUE)
+write.csv(unique_go_results, file = "/rds/projects/c/croftap-labdata2/Patricia/scRNAseq - Mouse AIA/Postn_Go_FilteredUn.csv")
+Postn_Go_FilteredUn <- read_csv("/rds/projects/c/croftap-labdata2/Patricia/scRNAseq - Mouse AIA/Postn_Go_FilteredUn.csv")
+
+go.results.top <- Postn_Go_FilteredUn %>% group_by(cluster) %>% top_n(n=5, -p.val)
+desired_order <- c("Resting", "Peak", "Resolving", "Resolved")  # Replace with your desired order
+go.results.top$cluster <- factor(go.results.top$cluster, levels = desired_order)
+p1<- sampleEnrichmentDotplot(go.results.top, selection_col = "description", 
++                              selected_genesets = unique(go.results.top$description), sample_id_col = "cluster", 
++                              fill_var = "odds.ratio", maxl=50, title="Go term")
+p1 <-p1+ geom_point(aes(size=n_fg), shape = 21, colour="black", stroke=1.1) +theme(axis.text.y = element_text(face = "bold",size = 18,colour = "black"),
++                                                                                    axis.text.x = element_text(face = "bold",size = 20, colour = "black"),
++                                                                                    axis.title.x = element_blank(),
++                                                                                    axis.title.y = element_blank(),
++                                                                                    legend.position = "top", 
++                                                                                    legend.text =element_text(face = "bold",size = 16, colour = "black"),
++                                                                                    legend.title = element_text(face = "bold",size = 16, colour = "black") )
+p1 <- p1 + scale_size_continuous(range = c(12, 18))
+p1
+```
+
+
+
+
+
+```{r}
+
+
+AIA$group %>% unique
+DimPlot(AIA, group.by = "General")
+ncol(AIA)
+
+
+Idents(AIA_Fb) <- "Final"
+DimPlot(AIA_Fb, group.by = "Final")
+ncol(AIA_Fb)
+
+```
+
+```{r}
+pt <- table(AIA_Fb$sample_condition, AIA_Fb$Final)
+pt <- as.data.frame(pt)
+
+pt<-pt %>%
+  pivot_wider(names_from = Var2, values_from = Freq) %>% 
+  as.data.frame() 
+
+
+pt <- pt %>% remove_rownames %>% column_to_rownames(var="Var1")
+pt <- pt/rowSums(pt)
+
+pt$condition<-rownames(pt)
+
+pt<-cSplit(pt, splitCols="condition", sep=".")
+pt <- pt[!grepl("pos", pt$condition_1), ]
+
+names(pt)[names(pt) == 'Cthrc1 Postn'] <- 'Cthrc1Postn'
+
+
+pt %>%  + 
+  geom_boxplot(fill =c("Resting" = "#0077BB", "Peak" = "#CC3311", "Resolving" = "#009988", "Resolved" = "#EE7733"), lwd = 1, color = "black",width=0.9, position = position_dodge(width=0.2)) + 
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, fill = NA, stroke = 1)+ggtitle("Cluster1")+theme_classic()+RotatedAxis()+
+  stat_boxplot(geom ='errorbar', width = 0.2, lwd=1)
+
+library(DescTools)
+DunnettTest(x=pt$Cthrc1Postn, g=pt$condition_2, control = "Resting")
+
+
+
+wisteria <- c("grey65", "burlywood3", "khaki2", "plum1", "lightcyan2", "cornflowerblue", "slateblue3")
+ pt %>% 
+  ggplot( aes(x=factor(condition_2, level=c("Resting", "Peak", "Resolving", "Resolved", "Persistent")), y=Cthrc1Postn)) +
+  geom_boxplot(aes(fill = condition_2),            #You can make a box plot too!
+               alpha = 0.8, width = 0.8) +      
+  geom_point(aes(fill = condition_2), shape = 21, color = "black", alpha = 0.8,
+             position = position_jitter(width = 0.1, seed = 666))+
+  scale_fill_manual(values = wisteria[c(3, 4, 6,5)]) +
+  labs(x = "Species",
+       y = "Bill length") +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.line = element_line(size = 1.2),
+        text = element_text(size = 12, color = "black", face = "bold"),
+        axis.text = element_text(size = 12, color = "black", face = "bold")
+        )
+
+
+```
+```{r}
+
+DotPlot(AIA_Fb, features = c("Fibroblast COMP+ Fibroblast Niche1","Fibroblast B Cell Rich Niche1",
+"Fibroblast T Cell Rich Niche1"), assay = "RNA", col.min = 0)+RotatedAxis()
+
+
+
+DotPlot(AIA_Fb, features = c("Fibroblast COMP+ Fibroblast Niche1","Fibroblast Lining Layer Cells1",
+"Fibroblast APOD+ GAS5+ FABP4+1", "Fibroblast Vascular Niche1", "Fibroblast B Cell Rich Niche1",
+"Fibroblast T Cell Rich Niche1"), assay = "RNA", col.min = 0)+RotatedAxis()+ scale_size(range = c(2, 8)) +  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5)
+
+```
+
+
+
