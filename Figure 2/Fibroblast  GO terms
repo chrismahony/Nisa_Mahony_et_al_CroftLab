@@ -1,0 +1,82 @@
+Idents(merging) <- 'first_type_nolining_niche'
+levels(merging)
+merging <- PrepSCTFindMarkers(merging)
+
+unique(markers$cluster)
+
+markers <- FindAllMarkers(merging, only.pos = T)
+table(markers$cluster)
+
+markers_top5 <- markers %>% group_by(cluster) %>%
+        slice_head(n = 5)
+
+
+markers_fibs <- markers_top5 %>% filter(grepl('Fibroblast', cluster))
+
+markers_fibs <- markers_fibs[c(1:30, 41:45),]
+markers_fibs <- markers_fibs %>% filter(!grepl('Erythrocytes', cluster))
+markers_fibs <- markers_fibs %>% filter(cluster != "Fibroblast B Cell Rich Niche")
+
+
+write.csv(markers,  "/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/markers_fibs.csv")
+
+selected_markers <- c("COMP", "COL1A1", "COL2A1", "COL6A1", "COL6A2", "PRG4", "FN1", "CLU", "TIMP1", "LUM", "APOD", "IGF1", "GAS5", "DCN", "FABP4", "ACTA2", "MYH11", "NOTCH3", "IGFBP7", "MYL9", "PTGDS", "CD52", "SSR4", "IGFBP4", "FAU", "CCL19", "TPT1", "ERG1", "FOS", "FOSB", "JUNB")
+
+dotplot<-DotPlot(merging, features=unique(markers_fibs$gene), idents=unique(markers_fibs$cluster))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
+  scale_colour_viridis(option="magma") +
+  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))+coord_flip()
+
+dotplot<-dotplot$data
+
+dotplot<-dotplot %>% 
+  select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, row_names_gp = gpar(fontsize = 8))
+
+
+library(gsfisher)
+
+#filter to get fibs onle (check)
+markers_fibs_all <- markers %>% filter(grepl('Fibroblast', cluster))
+markers_fibs_all <- markers_fibs_all %>% filter(!grepl('Erythrocytes', cluster))
+markers_fibs_all <- markers_fibs_all %>% filter(p_val_adj < 0.05)
+markers_fibs_all <- markers_fibs_all %>% filter(!grepl('NA', cluster))
+markers_fibs_all <- markers_fibs_all %>% filter(cluster != "Monocyte COMP+ Fibroblast Niche" & cluster != "Endothelial cells COMP+ Fibroblast Niche" & cluster != "B cell COMP+ Fibroblast Niche")
+
+
+unique(markers_fibs_all$cluster)
+
+annotation_gs <- fetchAnnotation(species="hs", ensembl_version=NULL, ensembl_host=NULL)
+
+index <- match(markers_fibs_all$gene, annotation_gs$gene_name)
+markers_fibs_all$ensembl <- annotation_gs$ensembl_id[index]
+
+
+FilteredGeneID <- unique(markers$gene)
+index <- match(FilteredGeneID, annotation_gs$gene_name)
+ensemblUni <- annotation_gs$ensembl_id[index]
+
+
+markers_fibs_all <- markers_fibs_all[!is.na(markers_fibs_all$ensembl),]
+ensemblUni <- ensemblUni[!is.na(ensemblUni)]
+
+
+go.results <- runGO.all(results=markers_fibs_all,
+                  background_ids = ensemblUni, gene_id_col="ensembl", gene_id_type="ensembl", sample_col="cluster", p_col="p_val_adj", p_threshold=0.05,
+                  species = "hs")
+go.results <- filterGenesets(go.results)
+go.results.top <- go.results %>% group_by(cluster) %>% top_n(n=5, -p.val)
+sampleEnrichmentDotplot(go.results.top, selection_col = "description", selected_genesets = unique(go.results.top$description), sample_id_col = "cluster", fill_var = "odds.ratio", maxl=50, title="Go term",rotate_sample_labels = T)
+
+write.csv(go.results, "/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/go.results_figure2.csv")
