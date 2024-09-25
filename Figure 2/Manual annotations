@@ -1,0 +1,366 @@
+library(tidyverse)
+library(stringr)
+
+setwd("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV")
+S1A <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S1A.csv")
+Slide1SampleA  <- merging[,grepl("Slide1SampleA", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide1SampleA))
+ncol(Slide1SampleA)
+S1A$Barcode <- paste(S1A$Barcode, "1", sep="_")
+S1A_colnames<-colnames(Slide1SampleA)
+S1A_colnames<-as.data.frame(S1A_colnames)
+S1A <- S1A[(S1A$Barcode %in% S1A_colnames$S1A_colnames),]
+S1A<-S1A %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide1SampleA<-AddMetaData(Slide1SampleA, S1A)
+
+S1_4master <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S1A.csv")
+library(splitstackshape)
+S1_4master<-cSplit(S1_4master, 'Barcode', sep="-", type.convert=FALSE)
+S1_4master$Barcode_1 <- paste(S1_4master$Barcode_1, "1", sep="-")
+#write out to csv and edit
+write.csv(S1_4master, "S1_4master.csv")
+S1_4master<-read.csv("S1_4master.csv")
+S1_4master$Barcode_2 <- as.character(S1_4master$Barcode_2)
+S1_4master["Barcode_2"][S1_4master["Barcode_2"] == "5"] <- "3"
+S1_4master["Barcode_2"][S1_4master["Barcode_2"] == "7"] <- "4"
+S1_4master["Barcode_2"][S1_4master["Barcode_2"] == "8"] <- "5"
+S1_4master["Barcode_2"][S1_4master["Barcode_2"] == "9"] <- "6"
+S1_4master["Barcode_2"][S1_4master["Barcode_2"] == "10"] <- "7"
+S1_4master["Barcode_2"][S1_4master["Barcode_2"] == "11"] <- "8"
+S1_4master["Barcode_2"][S1_4master["Barcode_2"] == "12"] <- "9"
+S1_4master["Barcode_2"][S1_4master["Barcode_2"] == "13"] <- "10"
+S1_4master["Barcode_2"][S1_4master["Barcode_2"] == "14"] <- "11"
+S1_4master["Barcode_2"][S1_4master["Barcode_2"] == "15"] <- "12"
+S1_4master["Barcode_2"][S1_4master["Barcode_2"] == "16"] <- "13"
+S1_4master$Barcode_1 <- paste(S1_4master$Barcode_1, S1_4master$Barcode_2, sep="_")
+S1_4master$Barcode_2 <-NULL
+
+Slide1SampleB  <- merging[,grepl("Slide1SampleB", merging$orig.ident, ignore.case=TRUE)]
+S1B_colnames<-colnames(Slide1SampleB)
+S1B_colnames<-as.data.frame(S1B_colnames)
+S1B <- S1_4master[(S1_4master$Barcode_1 %in% S1B_colnames$S1B_colnames),]
+S1B<-S1B %>% remove_rownames %>% column_to_rownames(var="Barcode_1")
+Slide1SampleB<-AddMetaData(Slide1SampleB, S1B)
+table(Slide1SampleB$Annotations)
+
+Slide2SampleA  <- merging[,grepl("Slide2SampleA", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide2SampleA))
+S2A_colnames<-colnames(Slide2SampleA)
+S2A_colnames<-as.data.frame(S2A_colnames)
+S2A <- S1_4master[(S1_4master$Barcode_1 %in% S2A_colnames$S2A_colnames),]
+S2A<-S2A %>% remove_rownames %>% column_to_rownames(var="Barcode_1")
+Slide2SampleA<-AddMetaData(Slide2SampleA, S2A)
+table(Slide2SampleA$Annotations)
+
+Slide2SampleC  <- merging[,grepl("Slide2SampleC", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide2SampleC))
+S2C_colnames<-colnames(Slide2SampleC)
+S2C_colnames<-as.data.frame(S2C_colnames)
+S2C <- S1_4master[(S1_4master$Barcode_1 %in% S2C_colnames$S2C_colnames),]
+S2C<-S2C %>% remove_rownames %>% column_to_rownames(var="Barcode_1")
+Slide2SampleC<-AddMetaData(Slide2SampleC, S2C)
+table(Slide2SampleC$Annotations)
+
+Slide2SampleD  <- merging[,grepl("Slide2SampleD", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide2SampleD))
+S2D_colnames<-colnames(Slide2SampleD)
+S2D_colnames<-as.data.frame(S2D_colnames)
+S2D <- S1_4master[(S1_4master$Barcode_1 %in% S2D_colnames$S2D_colnames),]
+S2D<-S2D %>% remove_rownames %>% column_to_rownames(var="Barcode_1")
+Slide2SampleD<-AddMetaData(Slide2SampleD, S2D)
+table(Slide2SampleD$Annotations)
+
+Slide3SampleA  <- merging[,grepl("Slide3SampleA", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide3SampleA))
+S3A_colnames<-colnames(Slide3SampleA)
+S3A_colnames<-as.data.frame(S3A_colnames)
+S3A <- S1_4master[(S1_4master$Barcode_1 %in% S3A_colnames$S3A_colnames),]
+S3A<-S3A %>% remove_rownames %>% column_to_rownames(var="Barcode_1")
+Slide3SampleA<-AddMetaData(Slide3SampleA, S3A)
+table(Slide3SampleA$Annotations)
+
+Slide3SampleB  <- merging[,grepl("Slide3SampleB", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide3SampleB))
+S3B_colnames<-colnames(Slide3SampleB)
+S3B_colnames<-as.data.frame(S3B_colnames)
+S3B <- S1_4master[(S1_4master$Barcode_1 %in% S3B_colnames$S3B_colnames),]
+S3B<-S3B %>% remove_rownames %>% column_to_rownames(var="Barcode_1")
+Slide3SampleB<-AddMetaData(Slide3SampleB, S3B)
+table(Slide3SampleB$Annotations)
+
+Slide3SampleC  <- merging[,grepl("Slide3SampleC", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide3SampleC))
+S3C_colnames<-colnames(Slide3SampleC)
+S3C_colnames<-as.data.frame(S3C_colnames)
+S3C <- S1_4master[(S1_4master$Barcode_1 %in% S3C_colnames$S3C_colnames),]
+S3C<-S3C %>% remove_rownames %>% column_to_rownames(var="Barcode_1")
+Slide3SampleC<-AddMetaData(Slide3SampleC, S3C)
+table(Slide3SampleC$Annotations)
+
+
+Slide3SampleD  <- merging[,grepl("Slide3SampleD", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide3SampleD))
+S3D_colnames<-colnames(Slide3SampleD)
+S3D_colnames<-as.data.frame(S3D_colnames)
+S3D <- S1_4master[(S1_4master$Barcode_1 %in% S3D_colnames$S3D_colnames),]
+S3D<-S3D %>% remove_rownames %>% column_to_rownames(var="Barcode_1")
+Slide3SampleD<-AddMetaData(Slide3SampleD, S3D)
+table(Slide3SampleD$Annotations)
+
+Slide4SampleA  <- merging[,grepl("Slide4SampleA", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide4SampleA))
+S4A_colnames<-colnames(Slide4SampleA)
+S4A_colnames<-as.data.frame(S4A_colnames)
+S4A <- S1_4master[(S1_4master$Barcode_1 %in% S4A_colnames$S4A_colnames),]
+S4A<-S4A %>% remove_rownames %>% column_to_rownames(var="Barcode_1")
+Slide4SampleA<-AddMetaData(Slide4SampleA, S4A)
+table(Slide4SampleA$Annotations)
+
+Slide4SampleB  <- merging[,grepl("Slide4SampleB", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide4SampleB))
+S4B_colnames<-colnames(Slide4SampleB)
+S4B_colnames<-as.data.frame(S4B_colnames)
+S4B <- S1_4master[(S1_4master$Barcode_1 %in% S4B_colnames$S4B_colnames),]
+S4B<-S4B %>% remove_rownames %>% column_to_rownames(var="Barcode_1")
+Slide4SampleB<-AddMetaData(Slide4SampleB, S4B)
+table(Slide4SampleB$Annotations)
+
+Slide4SampleC  <- merging[,grepl("Slide4SampleC", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide4SampleC))
+S4C_colnames<-colnames(Slide4SampleC)
+S4C_colnames<-as.data.frame(S4C_colnames)
+S4C <- S1_4master[(S1_4master$Barcode_1 %in% S4C_colnames$S4C_colnames),]
+S4C<-S4C %>% remove_rownames %>% column_to_rownames(var="Barcode_1")
+Slide4SampleC<-AddMetaData(Slide4SampleC, S4C)
+table(Slide4SampleC$Annotations)
+
+Slide4SampleD  <- merging[,grepl("Slide4SampleD", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide4SampleD))
+S4D_colnames<-colnames(Slide4SampleD)
+S4D_colnames<-as.data.frame(S4D_colnames)
+S4D <- S1_4master[(S1_4master$Barcode_1 %in% S4D_colnames$S4D_colnames),]
+S4D<-S4D %>% remove_rownames %>% column_to_rownames(var="Barcode_1")
+Slide4SampleD<-AddMetaData(Slide4SampleD, S4D)
+table(Slide4SampleD$Annotations)
+
+S5A <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S5A.csv")
+Slide5SampleA  <- merging[,grepl("Slide5SampleA", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide5SampleA))
+ncol(Slide5SampleA)
+S5A$Barcode <- paste(S5A$Barcode, "14", sep="_")
+S5A_colnames<-colnames(Slide5SampleA)
+S5A_colnames<-as.data.frame(S5A_colnames)
+S5A <- S5A[(S5A$Barcode %in% S5A_colnames$S5A_colnames),]
+S5A<-S5A %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide5SampleA<-AddMetaData(Slide5SampleA, S5A)
+table(Slide5SampleA$Annotations)
+
+S5B <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S5B.csv")
+Slide5SampleB  <- merging[,grepl("Slide5SampleB", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide5SampleB))
+ncol(Slide5SampleB)
+S5B$Barcode <- paste(S5B$Barcode, "15", sep="_")
+S5B_colnames<-colnames(Slide5SampleB)
+S5B_colnames<-as.data.frame(S5B_colnames)
+S5B <- S5B[(S5B$Barcode %in% S5B_colnames$S5B_colnames),]
+S5B<-S5B %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide5SampleB<-AddMetaData(Slide5SampleB, S5B)
+table(Slide5SampleB$Annotations)
+
+
+S5C <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S5C.csv")
+Slide5SampleC  <- merging[,grepl("Slide5SampleC", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide5SampleC))
+ncol(Slide5SampleC)
+S5C$Barcode <- paste(S5C$Barcode, "16", sep="_")
+S5C_colnames<-colnames(Slide5SampleC)
+S5C_colnames<-as.data.frame(S5C_colnames)
+S5C <- S5C[(S5C$Barcode %in% S5C_colnames$S5C_colnames),]
+S5C<-S5C %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide5SampleC<-AddMetaData(Slide5SampleC, S5C)
+table(Slide5SampleC$Annotations)
+
+S5D <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S5D.csv")
+Slide5SampleD  <- merging[,grepl("Slide5SampleD", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide5SampleD))
+ncol(Slide5SampleD)
+S5D$Barcode <- paste(S5D$Barcode, "17", sep="_")
+S5D_colnames<-colnames(Slide5SampleD)
+S5D_colnames<-as.data.frame(S5D_colnames)
+S5D <- S5D[(S5D$Barcode %in% S5D_colnames$S5D_colnames),]
+S5D<-S5D %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide5SampleD<-AddMetaData(Slide5SampleD, S5D)
+table(Slide5SampleD$Annotations)
+
+S6A <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S6A.csv")
+Slide6SampleA  <- merging[,grepl("Slide6SampleA", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide6SampleA))
+ncol(Slide6SampleA)
+S6A$Barcode <- paste(S6A$Barcode, "18", sep="_")
+S6A_colnames<-colnames(Slide6SampleA)
+S6A_colnames<-as.data.frame(S6A_colnames)
+S6A <- S6A[(S6A$Barcode %in% S6A_colnames$S6A_colnames),]
+S6A<-S6A %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide6SampleA<-AddMetaData(Slide6SampleA, S6A)
+table(Slide6SampleA$Annotations)
+
+S6B <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S6B.csv")
+Slide6SampleB  <- merging[,grepl("Slide6SampleB", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide6SampleB))
+ncol(Slide6SampleB)
+S6B$Barcode <- paste(S6B$Barcode, "19", sep="_")
+S6B_colnames<-colnames(Slide6SampleB)
+S6B_colnames<-as.data.frame(S6B_colnames)
+S6B <- S6B[(S6B$Barcode %in% S6B_colnames$S6B_colnames),]
+S6B<-S6B %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide6SampleB<-AddMetaData(Slide6SampleB, S6B)
+table(Slide6SampleB$Annotations)
+
+S6C <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S6C.csv")
+Slide6SampleC  <- merging[,grepl("Slide6SampleC", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide6SampleC))
+ncol(Slide6SampleC)
+S6C$Barcode <- paste(S6C$Barcode, "20", sep="_")
+S6C_colnames<-colnames(Slide6SampleC)
+S6C_colnames<-as.data.frame(S6C_colnames)
+S6C <- S6C[(S6C$Barcode %in% S6C_colnames$S6C_colnames),]
+S6C<-S6C %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide6SampleC<-AddMetaData(Slide6SampleC, S6C)
+table(Slide6SampleC$Annotations)
+
+S6D <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S6D.csv")
+Slide6SampleD  <- merging[,grepl("Slide6SampleD", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide6SampleD))
+ncol(Slide6SampleD)
+S6D$Barcode <- paste(S6D$Barcode, "21", sep="_")
+S6D_colnames<-colnames(Slide6SampleD)
+S6D_colnames<-as.data.frame(S6D_colnames)
+S6D <- S6D[(S6D$Barcode %in% S6D_colnames$S6D_colnames),]
+S6D<-S6D %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide6SampleD<-AddMetaData(Slide6SampleD, S6D)
+table(Slide6SampleD$Annotations)
+
+S7A <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S7A.csv")
+Slide7SampleA  <- merging[,grepl("Slide7SampleA", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide7SampleA))
+ncol(Slide7SampleA)
+S7A$Barcode <- paste(S7A$Barcode, "22", sep="_")
+S7A_colnames<-colnames(Slide7SampleA)
+S7A_colnames<-as.data.frame(S7A_colnames)
+S7A <- S7A[(S7A$Barcode %in% S7A_colnames$S7A_colnames),]
+S7A<-S7A %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide7SampleA<-AddMetaData(Slide7SampleA, S7A)
+table(Slide7SampleA$Annotations)
+
+S7B <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S7B.csv")
+Slide7SampleB  <- merging[,grepl("Slide7SampleB", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide7SampleB))
+ncol(Slide7SampleB)
+S7B$Barcode <- paste(S7B$Barcode, "23", sep="_")
+S7B_colnames<-colnames(Slide7SampleB)
+S7B_colnames<-as.data.frame(S7B_colnames)
+S7B <- S7B[(S7B$Barcode %in% S7B_colnames$S7B_colnames),]
+S7B<-S7B %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide7SampleB<-AddMetaData(Slide7SampleB, S7B)
+table(Slide7SampleB$Annotations)
+
+S7C <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S7C.csv")
+Slide7SampleC  <- merging[,grepl("Slide7SampleC", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide7SampleC))
+ncol(Slide7SampleC)
+S7C$Barcode <- paste(S7C$Barcode, "24", sep="_")
+S7C_colnames<-colnames(Slide7SampleC)
+S7C_colnames<-as.data.frame(S7C_colnames)
+S7C <- S7C[(S7C$Barcode %in% S7C_colnames$S7C_colnames),]
+S7C<-S7C %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide7SampleC<-AddMetaData(Slide7SampleC, S7C)
+table(Slide7SampleC$Annotations)
+
+S7D <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S7D.csv")
+Slide7SampleD  <- merging[,grepl("Slide7SampleD", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide7SampleD))
+ncol(Slide7SampleD)
+S7D$Barcode <- paste(S7D$Barcode, "25", sep="_")
+S7D_colnames<-colnames(Slide7SampleD)
+S7D_colnames<-as.data.frame(S7D_colnames)
+S7D <- S7D[(S7D$Barcode %in% S7D_colnames$S7D_colnames),]
+S7D<-S7D %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide7SampleD<-AddMetaData(Slide7SampleD, S7D)
+table(Slide7SampleD$Annotations)
+
+S8A <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S8A.csv")
+Slide8SampleA  <- merging[,grepl("Slide8SampleA", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide8SampleA))
+ncol(Slide8SampleA)
+S8A$Barcode <- paste(S8A$Barcode, "26", sep="_")
+S8A_colnames<-colnames(Slide8SampleA)
+S8A_colnames<-as.data.frame(S8A_colnames)
+S8A <- S8A[(S8A$Barcode %in% S8A_colnames$S8A_colnames),]
+S8A<-S8A %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide8SampleA<-AddMetaData(Slide8SampleA, S8A)
+table(Slide8SampleA$Annotations)
+
+S8B <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S8B.csv")
+Slide8SampleB  <- merging[,grepl("Slide8SampleB", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide8SampleB))
+ncol(Slide8SampleB)
+S8B$Barcode <- paste(S8B$Barcode, "27", sep="_")
+S8B_colnames<-colnames(Slide8SampleB)
+S8B_colnames<-as.data.frame(S8B_colnames)
+S8B <- S8B[(S8B$Barcode %in% S8B_colnames$S8B_colnames),]
+S8B<-S8B %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide8SampleB<-AddMetaData(Slide8SampleB, S8B)
+table(Slide8SampleB$Annotations)
+
+S8C <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Spatial_Annotations_LOUPE/Extracted_CSV/S8C.csv")
+Slide8SampleC  <- merging[,grepl("Slide8SampleC", merging$orig.ident, ignore.case=TRUE)]
+head(colnames(Slide8SampleC))
+ncol(Slide8SampleC)
+S8C$Barcode <- paste(S8C$Barcode, "28", sep="_")
+S8C_colnames<-colnames(Slide8SampleC)
+S8C_colnames<-as.data.frame(S8C_colnames)
+S8C <- S8C[(S8C$Barcode %in% S8C_colnames$S8C_colnames),]
+S8C<-S8C %>% remove_rownames %>% column_to_rownames(var="Barcode")
+Slide8SampleC<-AddMetaData(Slide8SampleC, S8C)
+table(Slide8SampleC$Annotations)
+
+
+S2A$X<-NULL
+S2C$X<-NULL
+S2D$X<-NULL
+S3A$X<-NULL
+S3B$X<-NULL
+S3C$X<-NULL
+S3D$X<-NULL
+S4A$X<-NULL
+S4B$X<-NULL
+S4C$X<-NULL
+S4D$X<-NULL
+
+anno_list <- c(S1A, S1B, S2A, S2C, S2D, S3A, S3B, S3C, S3D, S4A, S4B, S4C, S4D, S5A, S5B, S5C, S5D, S6A, S6B, S6C, S6D, S7A, S7B, S7C, S7D, S8A, S8B, S8C)
+
+for (i in 1:length(anno_list)){
+  anno_list[[i]]$...1 <- NULL
+    }
+
+S1B$...1 <- NULL
+S2A$...1 <- NULL
+S2C$...1 <- NULL
+S2D$...1 <- NULL
+S3A$...1 <- NULL
+S3B$...1 <- NULL
+S3C$...1 <- NULL
+S3D$...1 <- NULL
+S4A$...1 <- NULL
+S4B$...1 <- NULL
+S4C$...1 <- NULL
+S4D$...1 <- NULL
+
+all_anotations<-rbind(S1A, S1B, S2A, S2C, S2D, S3A, S3B, S3C, S3D, S4A, S4B, S4C, S4D, S5A, S5B, S5C, S5D, S6A, S6B, S6C, S6D, S7A, S7B, S7C, S7D, S8A, S8B, S8C)
+
+ncol(Slide2SampleA)
+
+merging<-AddMetaData(merging, all_anotations)
+
+Idents(merging) <- 'Annotations'
+SpatialDimPlot(merging, images = "slice1.13")
