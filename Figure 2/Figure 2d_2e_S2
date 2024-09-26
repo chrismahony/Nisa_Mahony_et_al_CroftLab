@@ -1,0 +1,36 @@
+#figure 2d
+all_markers_medfibros <- as.data.frame(all_markers_medfibros)
+rownames(all_markers_medfibros) <- all_markers_medfibros$...1
+
+merging <- AddModuleScore(merging, features = All.markers_fig3_notch %>% filter(cluster== "FLS_HUVEC") %>% head(40) %>% rownames() %>% list(), name="notch_module_new")
+
+merging <- AddModuleScore(merging, features = all_markers_medfibros %>% filter(cluster== "SPARC+COL3A1+ C4") %>% head(40) %>% rownames() %>% list(), name="endo_interacting_new")
+
+merging <- AddModuleScore(merging, features = all_markers_medfibros %>% filter(cluster== "CXCL10+CCL19+ C11") %>% head(40) %>% rownames() %>% list(), name="Tcell_interacting_new")
+
+
+palette <- c("T Cell Rich Niche"="#0C5BB0FF", "Erythrocytes"="#EE0011FF", "B Cell Rich Niche"="#15983DFF", "COMP+ Fibroblast Niche"="#EC579AFF", "APOD+ GAS5+ FABP4+"="#FA6B09FF", "Vascular Niche"="#149BEDFF", "Lining Layer Cells"= "#A1C720FF")
+
+
+Idents(merging) <- 'named_clusters'
+SpatialFeaturePlot(merging, c("endo_interacting_new1"), images = "slice1" , min.cutoff = 0.2, max.cutoff = 0.35)
+SpatialFeaturePlot(merging, c("Tcell_interacting_new1"), images = "slice1", min.cutoff = 0.2, max.cutoff = 0.35)
+SpatialDimPlot(merging, images = "slice1", cols = palette)
+
+
+FeaturePlot(merging, c("endo_interacting_new1"),  min.cutoff = 0.2, max.cutoff = 0.35) +NoAxes()
+FeaturePlot(merging, c("Tcell_interacting_new1"),  min.cutoff = 0.2, max.cutoff = 0.35) +NoAxes()
+
+
+#figure 2e
+merging$first_type_nolining %>% unique()
+Idents(merging) <- 'first_type_nolining_niche'
+levels(merging)
+plot <- levels(merging)[grep("Fibroblast ", levels(merging))]
+DotPlot(merging, ident=plot[c(1, 2,3,5,9)], features=c("endo_interacting_new1", "Tcell_interacting_new1"))+RotatedAxis()+ scale_size(range = c(2, 8))+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5)
+
+
+#Figure S2e
+FeaturePlot(merging, features = c("CD68","CD14", "FCGR3A" ), max.cutoff = "q90", min.cutoff = "q10")
+
