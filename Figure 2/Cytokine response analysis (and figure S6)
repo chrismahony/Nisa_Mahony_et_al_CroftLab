@@ -1,7 +1,5 @@
 
-```{r}
-
-
+#figure 2g
 Idents(merging)<-"named_clusters"
 palette <- c("T Cell Rich Niche"="#0C5BB0FF", "Erythrocytes"="#EE0011FF", "B Cell Rich Niche"="#15983DFF", "COMP+ Fibroblast Niche"="#EC579AFF", "APOD+ GAS5+ FABP4+"="#FA6B09FF", "Vascular Niche"="#149BEDFF", "Lining Layer Cells"= "#A1C720FF")
 
@@ -54,19 +52,13 @@ p5 <- FeaturePlot(merging, features = "TGFb_vs_NS_new2.csv1", min.cutoff = "q10"
 
 plot_grid(p1,p2,p3,p4,p5, ncol=5)
 
-
-```
-
-```{r}
-
-
 Idents(merging) <- 'first_type_nolining_niche'
 
 levels=levels(merging)[grep("Fibroblast",levels(merging))]
 levels <- levels[-c(4,7,8,10,11)]
 
 
-
+#figure 2h
 #dotplot <- DotPlot(merging, features=c( "TGFb_module1", "IFNg_module1", "IL1b_module1", #"TNFa_module1","IL6_module1" ), idents=levels)+ RotatedAxis()+ scale_size(range = c(2, 8))
 
 dotplot <- DotPlot(merging, features=c("IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1"), idents=levels[-5])+ RotatedAxis()+ scale_size(range = c(2, 8))
@@ -89,44 +81,6 @@ library(ComplexHeatmap)
 
 Heatmap(dotplot, border=T)
 
-```
-```{r}
-table(merging$Annotations_new_new)
-Idents(merging)<-'Annotations_new_new'
-list(levels(merging))
-DotPlot(merging, features=c( "IFNg_module1", "IL1b_module1", "TNFa_module1","IL6_module1",  "TGFb_module1"), idents = c("periAggr_fibro", "periVasc_fibro"))+ RotatedAxis()+ scale_size(range = c(2, 8))+
-  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
-  scale_colour_viridis(option="magma") +
-  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
-
-
-
-Idents(merging)<-'pathotype'
-
-merging$Annotations_new_new_disease <- paste(merging$Annotations_new_new, merging$diseasestate)
-Idents(merging)<-'Annotations_new_new_disease'
-
-
-
-
-med_fibs_markers <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/med_fibs_markers.csv", row.names=1)
-merging <- AddModuleScore(merging, features = med_fibs_markers %>% filter(cluster== "SPARC+COL3A1+ C4") %>% head(40) %>% rownames() %>% list(), name="EC_interacting_new")
-
-DotPlot(merging, features=c( "IFNg_vs_NS_new2.csv1", "IL1b_vs_NS_new2.csv1", "TNFa_vs_NS_new2.csv1", "IL6_vs_NS_new2.csv1", "TGFb_vs_NS_new2.csv1", "EC_interacting_new1", "Tcell_module1"), idents = c("periAggr_fibro", "periVasc_fibro"))+ RotatedAxis()+ scale_size(range = c(2, 8))+
-  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
-  scale_colour_viridis(option="magma") +
-  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
-
-
-
-
-
-Idents(merging_anno)<-'diseasestate'
-list(levels(merging_anno))
-DotPlot(merging_anno, features=c( "TGFb_module1", "IFNg_module1", "IL1b_module1", "TNFa_module1","IL6_module1" ,"FLS_HUVEC_module1", "Tcell_module1"))+ RotatedAxis()+ scale_size(range = c(2, 8))+
-  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
-  scale_colour_viridis(option="magma") +
-  guides(size=guide_legend(override.aes=list(shape=21, colour="black", fill="white")))
 
 
 Idents(merging_anno)<-'prediction_named_6datasets'
@@ -313,7 +267,7 @@ Heatmap(dotplot[,c(2,1,3)], cluster_columns = F, border=T)
 med_fibs_markers <- read.csv("/rds/projects/c/croftap-visium-manuscript-01/Visium_CManalysis/paper_figures/med_fibs_markers.csv", row.names=1)
 merging <- AddModuleScore(merging, features = med_fibs_markers %>% filter(cluster== "SPARC+COL3A1+ C4") %>% head(40) %>% rownames() %>% list(), name="EC_interacting_new")
 
-
+#figure S6d
 Idents(merging)<-'pathotype'
 list(levels(merging))
 DotPlot(merging, features=c( "TGFb_module1", "IFNg_module1", "IL1b_module1", "TNFa_module1","IL6_module1" ,"EC_interacting_new1", "Tcell_module1"), idents = c("Lymphoid", "PI" ,   "OA"))+ RotatedAxis()+ scale_size(range = c(2, 8))+
