@@ -1,0 +1,5 @@
+merging$named_clusters %>% unique()
+Idents(merging) <- 'named_clusters'
+
+DotPlot(merging, feature= c("CD52", "TRBC2", "CCL19", "IGHG3", "IGHG4", "IGKC", "ACTA2", "TAGLN", "MYL9", "HBA2", "HBA1", "PRG4", "FN1", "MMP3", "COMP", "COL1A1", "POSTN", "MTRNR2L12", "FABP4", "APOD"))+RotatedAxis()+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5)
