@@ -1,6 +1,6 @@
-#data for replicating this anlaysis can be found at GSE277878, GSE277879, GSE277880
+#data for replicating this analysis can be found at GSE277878, GSE277879, GSE277880
 
-#This code require the following packages (along with associated dependicies) and has been run in RStudio (v4.3.1):
+#This code requires the following packages (along with associated dependencies) and has been run in RStudio (v4.3.1):
 
 Seurat (v4.3.1)
 sctransform (v0.3.5)
@@ -15,4 +15,4 @@ DESeq2 (v1.40.2)
 
 
 #Expected output: All the main outputs are plots from the above packages depicting spatial gene expression/scRNAseq gene expression
-#Expected run time: Runtime will vary, analysis was perfomred using a HPC with R session of about 160 gb of RAM
+#Expected run time: Runtime will vary, analysis was performed using a HPC with an R session of about 160 gb of RAM
