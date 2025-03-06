@@ -215,3 +215,98 @@ Heatmap(dotplot, border=T)
 
 
 ```
+
+
+
+```{r}
+
+
+df %>% filter(Category=="Secreted Factors")
+
+amp2_small$cluster_name %>% unique()
+Idents(amp2_small) <- 'cell_type'
+
+
+DotPlot(amp2_small, features = c("ECM.Glycoproteins1", "ECM.affiliated.Proteins1", "ECM.Regulators1", "Secreted.Factors1", "Collagens1", "Proteoglycans1")
+)+RotatedAxis()
+
+
+DotPlot(amp2_small, features = c("ECM.Glycoproteins1", "ECM.affiliated.Proteins1", "ECM.Regulators1", "Secreted.Factors1", "Collagens1", "Proteoglycans1"), ident="Myeloid cell"
+)+RotatedAxis()
+
+DimPlot(amp2_small)
+
+dp <- DotPlot(amp2_small, features = c("ECM.Glycoproteins1", "ECM.affiliated.Proteins1", "ECM.Regulators1", "Secreted.Factors1", "Collagens1", "Proteoglycans1"), group.by = "cell_type") +
+  scale_size(range = c(2, 8)) +  # Adjust dot size
+  scale_color_gradient(low = "lightblue", high = "darkred") +  # Continuous color scale
+  theme_minimal(base_size = 14) +  # Minimal theme with larger text
+  theme(
+    panel.grid = element_blank(),  # Remove gridlines
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels
+    axis.ticks = element_line(color = "black"),
+    panel.border = element_rect(color = "black", fill = NA, size = 1)# Add axis ticks
+  ) +
+  labs(size = "Fraction", color = "Expression") +RotatedAxis()+
+  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5)
+
+dp
+
+
+```
+
+
+```{r}
+
+
+
+Idents(amp2_small) <- 'cluster_name'
+dotplot<-DotPlot(amp2_small, features = df %>% filter(Category == "ECM Regulators" & str_detect(genes, "MMP")) %>%
+  pull(genes), ident=levels(amp2_small)[grep("M-", levels(amp2_small))]
+)+RotatedAxis()
+
+dotplot<-dotplot$data
+
+
+library(tidyr)
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, border = T, show_row_names = T)
+
+
+Idents(amp2_small) <- 'cell_type'
+dotplot<-DotPlot(amp2_small, features = df %>% filter(Category == "ECM Regulators" & str_detect(genes, "MMP")) %>%
+  pull(genes)
+)+RotatedAxis()
+
+dotplot<-dotplot$data
+
+
+library(tidyr)
+dotplot<-dotplot %>% 
+  dplyr::select(-pct.exp, -avg.exp) %>%  
+  pivot_wider(names_from = id, values_from = avg.exp.scaled) %>% 
+  as.data.frame() 
+
+dotplot$features.plot<-unique(dotplot$features.plot)
+dotplot<-na.omit(dotplot)
+
+row.names(dotplot) <- dotplot$features.plot  
+dotplot <- dotplot[,-1] %>% as.matrix()
+
+library(ComplexHeatmap)
+
+Heatmap(dotplot, border = T, show_row_names = T)
+
+
+```
